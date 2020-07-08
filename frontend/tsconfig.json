@@ -3,9 +3,15 @@
 		"outDir": "./dist/",
 		"sourceMap": true,
 		"strict": true,
-		"module": "es6",
-		"jsx": "react",
-		"esModuleInterop": true,
+        "module": "es6",
+        "moduleResolution": "node",
+        "jsx": "react",
+        "allowJs": true,
+        "esModuleInterop": true,
+        "lib": ["es6", "dom"],
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
 		"typeRoots": [
 			"./node_modules/@types",
             "./custom_types"

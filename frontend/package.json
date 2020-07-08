@@ -16,12 +16,27 @@
     "homepage": "https://github.com/kirill-aleksandrov/messenger#readme",
     "private": true,
     "dependencies": {
+        "@material-ui/core": "^4.11.0",
+        "@material-ui/icons": "^4.9.1",
+        "classnames": "^2.2.6",
+        "fontsource-roboto": "^2.1.4",
+        "notistack": "^0.9.17",
         "react": "^16.12.0",
-        "react-dom": "^16.12.0"
+        "react-dom": "^16.12.0",
+        "react-redux": "^7.2.0",
+        "react-router-dom": "^5.2.0",
+        "redux": "^4.0.5",
+        "redux-thunk": "^2.3.0"
     },
     "devDependencies": {
+        "@types/classnames": "^2.2.10",
+        "@types/material-ui": "^0.21.7",
         "@types/react": "^16.9.13",
         "@types/react-dom": "^16.9.4",
+        "@types/react-redux": "^7.1.9",
+        "@types/react-router-dom": "^5.1.5",
+        "@types/redux": "^3.6.0",
+        "@types/redux-thunk": "^2.1.0",
         "css-loader": "^3.6.0",
         "file-loader": "^6.0.0",
         "html-webpack-plugin": "^3.2.0",

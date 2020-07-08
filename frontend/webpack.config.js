@@ -3,14 +3,19 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	entry: './src/index.tsx',
-	devtool: 'source-map',
 	output: {
 		filename: 'bundle.js',
 		path: path.resolve(__dirname, 'dist')
 	},
 	resolve: {
 		extensions: ['.js', '.ts', '.tsx']
-	},
+    },
+    devServer: {
+        historyApiFallback: true,
+        proxy: {
+            '/api': 'http://localhost:3000'
+        }
+    },
 	module: {
 		rules: [
 			{
@@ -38,6 +43,10 @@ module.exports = {
                     'css-loader'
                 ],
                 exclude: /\.m\.css$/
+            },
+            {
+                test: /\.(png|woff|woff2)$/,
+                use: 'file-loader'
             }
 		]
 	},
