@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './Styles.m.css';
 import logo from '../../assets/images/logo.png';
 
+import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
     Button,
     CircularProgress,
@@ -14,18 +15,20 @@ import {
     Typography
 } from '@material-ui/core';
 
-import { Visibility, VisibilityOff } from '@material-ui/icons';
-
+import { withSnackbar, SnackbarMessage, OptionsObject } from 'notistack';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { RootState } from '../../store/index';
 import { AppThunkDispatch } from '../../store/thunk';
-import { login } from '../../store/auth/actions';
+import { signup } from '../../store/auth/actions';
+import { SignupData } from '../../store/auth/types';
+import { history } from '../../App';
 
 interface Props {
     isFetching: boolean,
     error: string,
-    login: (userName: string, password: string) => void
+    signup: (data: SignupData) => void,
+    enqueueSnackbar: (message: SnackbarMessage, options: OptionsObject) => void
 }
 
 class Login extends React.Component<Props>  {
@@ -43,6 +46,23 @@ class Login extends React.Component<Props>  {
 
     handleClickShowPassword = () => {
         this.setState({ showPassword: !this.state.showPassword });
+    }
+
+    signup = async () => {
+        const { firstName, lastName, userName, password } = this.state;
+
+        if (!userName || !password) {
+            this.props.enqueueSnackbar("Username and password is required", { variant: "warning" });
+            return;
+        }
+
+        try {
+            await this.props.signup({ firstName, lastName, userName, password });
+            this.props.enqueueSnackbar(`${userName} is registered`, { variant: "success" });
+            history.push('/login');
+        } catch (error) {
+            this.props.enqueueSnackbar(error, { variant: "error" });
+        }
     }
 
     render() {
@@ -104,6 +124,7 @@ class Login extends React.Component<Props>  {
                             style={{ width: "100%" }}
                             disabled={this.props.isFetching}
                             size="small"
+                            onClick={this.signup}
                         >
                             Sign up
                         </Button>
@@ -127,7 +148,7 @@ const mapStateToProps = (state: RootState) => ({
 });
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    login: (userName: string, password: string) => dispatch(login(userName, password))
+    signup: (data: SignupData) => dispatch(signup(data))
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default withSnackbar(connect(mapStateToProps, mapDispatchToProps)(Login));

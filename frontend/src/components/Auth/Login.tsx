@@ -21,12 +21,13 @@ import { connect } from 'react-redux';
 import { RootState } from '../../store/index';
 import { AppThunkDispatch } from '../../store/thunk';
 import { login } from '../../store/auth/actions';
+import { LoginData } from '../../store/auth/types';
 import { history } from '../../App';
 
 interface Props {
     isFetching: boolean,
     error: string,
-    login: (userName: string, password: string) => void,
+    login: (data: LoginData) => void,
     enqueueSnackbar: (message: SnackbarMessage, options: OptionsObject) => void
 }
 
@@ -54,7 +55,7 @@ class Login extends React.Component<Props>  {
         }
 
         try {
-            await this.props.login(userName, password);
+            await this.props.login({ userName, password });
             history.push('/messages');
         } catch (error) {
             this.props.enqueueSnackbar(error, { variant: "error" });
@@ -129,7 +130,7 @@ const mapStateToProps = (state: RootState) => ({
 });
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    login: (userName: string, password: string) => dispatch(login(userName, password))
+    login: (data: LoginData) => dispatch(login(data))
 });
 
 export default withSnackbar(connect(mapStateToProps, mapDispatchToProps)(Login));

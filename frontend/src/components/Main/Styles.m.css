@@ -1,0 +1,37 @@
+.Main {
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.Conversations {
+    min-width: 25%;
+    max-width: 50%;
+    width: 30%;
+    height: 100%;
+    border-right: solid 1px #AAA;
+    overflow: hidden;
+    resize: horizontal;
+}
+
+.Messages {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.Messages .header {
+    height: 30px;
+    border-bottom: solid 1px #AAA;
+}
+.Messages .container {
+    flex-grow: 1;
+}
+
+.InputString {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    padding: 2px;
+    border-top: solid 1px #AAA;
+}
