@@ -56,7 +56,7 @@ class Login extends React.Component<Props>  {
 
         try {
             await this.props.login({ userName, password });
-            history.push('/messages');
+            history.push('/main');
         } catch (error) {
             this.props.enqueueSnackbar(error, { variant: "error" });
         }
