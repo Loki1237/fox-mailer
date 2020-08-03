@@ -2,8 +2,9 @@ import { Entity, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedCol
 import { User } from './User';
 import { Message } from './Message';
 
-@Entity()
+@Entity("conversations")
 export class Conversation {
+
     @PrimaryGeneratedColumn()
     id!: number;
 
@@ -16,4 +17,5 @@ export class Conversation {
     @ManyToMany(() => User, user => user.conversations)
     @JoinTable()
     participants!: User[];
+
 }

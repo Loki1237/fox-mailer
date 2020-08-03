@@ -2,8 +2,9 @@ import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, PrimaryGenerated
 import { User } from './User';
 import { Conversation } from './Conversation';
 
-@Entity()
+@Entity("messages")
 export class Message {
+
     @PrimaryGeneratedColumn()
     id!: number;
 
@@ -18,4 +19,5 @@ export class Message {
 
     @CreateDateColumn()
     createdAt!: Date;
+
 }
