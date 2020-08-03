@@ -20,6 +20,7 @@
         "@material-ui/icons": "^4.9.1",
         "classnames": "^2.2.6",
         "fontsource-roboto": "^2.1.4",
+        "lodash": "^4.17.19",
         "notistack": "^0.9.17",
         "react": "^16.12.0",
         "react-dom": "^16.12.0",
@@ -30,6 +31,7 @@
     },
     "devDependencies": {
         "@types/classnames": "^2.2.10",
+        "@types/lodash": "^4.14.158",
         "@types/material-ui": "^0.21.7",
         "@types/react": "^16.9.13",
         "@types/react-dom": "^16.9.4",
