@@ -2,9 +2,13 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
+import 'reflect-metadata';
+import { useExpressServer } from 'routing-controllers';
 import { createConnection } from 'typeorm';
 import { entities } from './entities';
-import { createAuthRouter } from './middleware/auth';
+import { AuthController } from './controllers/AuthController';
+import { UserController } from './controllers/UserController';
+import { authentification } from './middleware/authentification';
 
 dotenv.config();
 
@@ -22,9 +26,12 @@ createConnection({
 
     app.use(cookieParser());
     app.use(bodyParser.json());
+    app.use(authentification);
 
-    app.use('/', createAuthRouter());
-    app.get('/', (req, res) => res.send('Hello world'));
+    useExpressServer(app, {
+        routePrefix: '/api',
+        controllers: [UserController, AuthController]
+    });
 
     app.listen(3000, () => console.log('Running'));
 }).catch(console.log);
