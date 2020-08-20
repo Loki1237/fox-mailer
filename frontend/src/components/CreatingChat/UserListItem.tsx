@@ -20,7 +20,11 @@ const UserListItem = (props: Props) => {
             <ListItemAvatar>
                 <Avatar>{props.user.firstName[0]}</Avatar>
             </ListItemAvatar>
-            <ListItemText primary={props.user.firstName + " " + props.user.lastName} />
+
+            <ListItemText
+                primary={props.user.firstName + " " + props.user.lastName}
+                secondary={props.user.userName}
+            />
             <ListItemSecondaryAction>
                 <Checkbox color="primary" value={props.user.id} onChange={props.setSelected} />
             </ListItemSecondaryAction>
