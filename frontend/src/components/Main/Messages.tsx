@@ -1,6 +1,13 @@
+/*
+ * TODO: добавить имя автора для каждого сообщения в чатах
+ *       подправить функцию createDate
+ *       сделать поиск сообщений
+ */
+
 import React from 'react';
 import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
+import messageSound from '../../assets/sounds/message.mp3';
 
 import InputString from './InputString';
 import MessageListItem from './MessageListItem';
@@ -32,7 +39,6 @@ import {
     ListItemText,
     Typography
 } from '@material-ui/core';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
 import SearchIcon from '@material-ui/icons/Search';
 import InfoIcon from '@material-ui/icons/InfoOutlined';
 
@@ -56,21 +62,33 @@ interface State {
 
 class Messages extends React.Component<Props, State> {
     messagesWebSocket: WebSocket = new WebSocket('ws://localhost:3000/messages');
+    messageSound: HTMLAudioElement = new Audio(messageSound);
     state: State = {
         message: "",
         chatDataWindow: false
     }
 
     componentDidMount() {
-        this.messagesWebSocket.onmessage = (message) => {
-            const currentConversation = this.props.currentConversation;
-            const parsedMessage: Message = JSON.parse(message.data);
+        this.messagesWebSocket.addEventListener("message", this.handleReceiveMessage);
+    }
 
-            this.props.setLastMessageInConversation(parsedMessage.conversationId, parsedMessage);
-            if (currentConversation && parsedMessage.conversationId === currentConversation.id) {
-                this.props.addMessageInCurrentConversation(parsedMessage);
-            }
-        };
+    handleReceiveMessage = (message: MessageEvent) => {
+        const currentConversation = this.props.currentConversation;
+        const parsedMessage: Message = JSON.parse(message.data);
+
+        this.props.setLastMessageInConversation(parsedMessage.conversationId, parsedMessage);
+        if (currentConversation && parsedMessage.conversationId === currentConversation.id) {
+            this.props.addMessageInCurrentConversation(parsedMessage);
+        }
+
+        const isIncomingMessages = parsedMessage.authorId !== this.props.currentUser?.id;
+        if (isIncomingMessages) {
+            this.messageSound.play();
+        }
+
+        if (isIncomingMessages && parsedMessage.conversationId !== this.props.currentConversation?.id) {
+            notify.info(`Message: ${parsedMessage.text}`);
+        }
     }
 
     createConversationName = () => {
@@ -83,18 +101,8 @@ class Messages extends React.Component<Props, State> {
 
     createDate = (currentMessage: Message, prevMessage: Message) => {
         const months = [
-            "january",
-            "february",
-            "march",
-            "april",
-            "may",
-            "june",
-            "july",
-            "august",
-            "september",
-            "october",
-            "november",
-            "december"
+            "january", "february", "march", "april", "may", "june", "july", "august", "september", "october",
+            "november", "december"
         ];
 
         const currentMessageDate = new Date(currentMessage.createdAt);
