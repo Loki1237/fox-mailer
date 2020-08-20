@@ -1,8 +1,8 @@
 import React from 'react';
-import styles from './Styles.m.css';
+import styles from './Styles.m.scss';
 import logo from '../../assets/images/logo.png';
+import { toast as notify } from 'react-toastify';
 
-import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
     Button,
     CircularProgress,
@@ -14,8 +14,8 @@ import {
     TextField,
     Typography
 } from '@material-ui/core';
+import { Visibility, VisibilityOff } from '@material-ui/icons';
 
-import { withSnackbar, SnackbarMessage, OptionsObject } from 'notistack';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { RootState } from '../../store/index';
@@ -27,8 +27,7 @@ import { history } from '../../App';
 interface Props {
     isFetching: boolean,
     error: string,
-    login: (data: LoginData) => void,
-    enqueueSnackbar: (message: SnackbarMessage, options: OptionsObject) => void
+    login: (data: LoginData) => void
 }
 
 class Login extends React.Component<Props>  {
@@ -50,15 +49,15 @@ class Login extends React.Component<Props>  {
         const { userName, password } = this.state;
 
         if (!userName || !password) {
-            this.props.enqueueSnackbar("Enter your username and password", { variant: "warning" });
+            notify.warn("Enter your username and password");
             return;
         }
 
         try {
             await this.props.login({ userName, password });
             history.push('/main');
-        } catch (error) {
-            this.props.enqueueSnackbar(error, { variant: "error" });
+        } catch (e) {
+            notify.error(e.message);
         }
     }
 
@@ -133,4 +132,4 @@ const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
     login: (data: LoginData) => dispatch(login(data))
 });
 
-export default withSnackbar(connect(mapStateToProps, mapDispatchToProps)(Login));
+export default connect(mapStateToProps, mapDispatchToProps)(Login);

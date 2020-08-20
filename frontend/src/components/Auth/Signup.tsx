@@ -1,6 +1,7 @@
 import React from 'react';
-import styles from './Styles.m.css';
+import styles from './Styles.m.scss';
 import logo from '../../assets/images/logo.png';
+import { toast as notify } from 'react-toastify';
 
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
@@ -27,8 +28,7 @@ import { history } from '../../App';
 interface Props {
     isFetching: boolean,
     error: string,
-    signup: (data: SignupData) => void,
-    enqueueSnackbar: (message: SnackbarMessage, options: OptionsObject) => void
+    signup: (data: SignupData) => void
 }
 
 class Login extends React.Component<Props>  {
@@ -52,16 +52,16 @@ class Login extends React.Component<Props>  {
         const { firstName, lastName, userName, password } = this.state;
 
         if (!userName || !password) {
-            this.props.enqueueSnackbar("Username and password is required", { variant: "warning" });
+            notify.warn("Username and password is required");
             return;
         }
 
         try {
             await this.props.signup({ firstName, lastName, userName, password });
-            this.props.enqueueSnackbar(`${userName} is registered`, { variant: "success" });
+            notify.success(`${userName} is registered`);
             history.push('/login');
-        } catch (error) {
-            this.props.enqueueSnackbar(error, { variant: "error" });
+        } catch (e) {
+            notify.error(e.message);
         }
     }
 
@@ -151,4 +151,4 @@ const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
     signup: (data: SignupData) => dispatch(signup(data))
 });
 
-export default withSnackbar(connect(mapStateToProps, mapDispatchToProps)(Login));
+export default connect(mapStateToProps, mapDispatchToProps)(Login);
