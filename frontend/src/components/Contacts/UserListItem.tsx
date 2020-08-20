@@ -11,12 +11,13 @@ import { User } from '../../store/contacts/types';
 
 interface Props {
     user: User,
-    action?: React.ReactElement
+    action?: React.ReactElement,
+    onClick: () => void
 }
 
 const UserListItem = (props: Props) => {
     return (
-        <ListItem key={props.user.id} button>
+        <ListItem button onClick={props.onClick}>
             <ListItemAvatar>
                 <Avatar>{props.user.firstName[0]}</Avatar>
             </ListItemAvatar>
