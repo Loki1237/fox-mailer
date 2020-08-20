@@ -12,23 +12,17 @@ interface Props {
     smallScreenMode: boolean
 }
 
-interface State {
-    compactMode: boolean
-}
+const Main = (props: Props) => {
+    const renderConversations = !props.currentConversation || !props.smallScreenMode;
+    const renderMessages = props.currentConversation || !props.smallScreenMode;
 
-class Main extends React.Component<Props, State> {
-    render() {
-        const renderConversations = !this.props.currentConversation || !this.props.smallScreenMode;
-        const renderMessages = this.props.currentConversation || !this.props.smallScreenMode;
-
-        return (
-            <div className={styles.Main}>
-                {renderConversations && <Conversations fullScreen={this.props.smallScreenMode} />}
-                {renderMessages && <Messages />}
-            </div>
-        );
-    }
-}
+    return (
+        <div className={styles.Main}>
+            {renderConversations && <Conversations fullScreen={props.smallScreenMode} />}
+            {renderMessages && <Messages />}
+        </div>
+    );
+};
 
 const mapStateToProps = (state: RootState) => ({
     currentConversation: state.conversations.currentConversation
