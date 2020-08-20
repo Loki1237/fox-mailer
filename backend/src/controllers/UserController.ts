@@ -7,26 +7,13 @@ import _ from 'lodash';
 @Controller()
 export class UserController {
 
-    @Get('/users')
-    async getAll(@Req() req: Request, @Res() res: Response) {
-        const userRepository = getRepository(User);
-        const users = await userRepository.find({
-            select: ["id", "userName", "firstName", "lastName"],
-            where: {
-                id: Not(req.body.user.id)
-            }
-        });
-
-        return res.status(200).json(users).end();
-    }
-
     @Get('/contacts')
     async getContacts(@Req() req: Request, @Res() res: Response) {
         const userRepository = getRepository(User);
         const user = await userRepository
             .createQueryBuilder("user")
             .select(["user.id"])
-            .where("user.id = :id", { id: req.body.user.id })
+            .where("user.id = :id", { id: req.session.user.id })
             .leftJoin("user.contacts", "contacts")
             .addSelect(["contacts.id", "contacts.userName", "contacts.firstName", "contacts.lastName"])
             .orderBy("contacts.firstName", "ASC")
@@ -36,13 +23,13 @@ export class UserController {
             return res.status(400).send();
         }
 
-        return res.status(200).json(user.contacts).end();
+        return res.status(200).send(user.contacts);
     }
 
     @Post('/users/search')
     async search(@Req() req: Request, @Res() res: Response) {
         const fullName = req.body.string.split(" ");
-        const userId = req.body.user.id;
+        const userId = req.session.user.id;
 
         const firstName = `%${fullName[0]}%`;
         const lastName = fullName.length >= 2 ? `%${fullName[1]}%` : "%%";
@@ -60,7 +47,7 @@ export class UserController {
             .take(20)
             .getMany();
 
-        return res.status(200).json(users).end();
+        return res.status(200).send(users);
     }
 
     @Put('/contacts/add/:id')
@@ -68,12 +55,12 @@ export class UserController {
         const userRepository = getRepository(User);
         const user = await userRepository.findOne({
             where: {
-                id: req.body.user.id
+                id: req.session.user.id
             },
             relations: ["contacts"]
         });
 
-        if (!user || +req.params.id === req.body.user.id) {
+        if (!user || +req.params.id === req.session.user.id) {
             return res.status(400).send();
         }
 
@@ -89,7 +76,7 @@ export class UserController {
         userRepository.merge(user, { contacts: [...user.contacts, newContact] });
         await userRepository.save(user);
 
-        return res.status(200).json(newContact).end();
+        return res.status(200).send(newContact);
     }
 
     @Delete('/contacts/delete/:id')
@@ -97,7 +84,7 @@ export class UserController {
         const userRepository = getRepository(User);
         const user = await userRepository.findOne({
             where: {
-                id: req.body.user.id
+                id: req.session.user.id
             },
             relations: ["contacts"]
         });
