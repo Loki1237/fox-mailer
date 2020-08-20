@@ -1,4 +1,4 @@
-import { Entity, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, Column, JoinTable } from 'typeorm';
 import { User } from './User';
 import { Message } from './Message';
 
@@ -8,8 +8,14 @@ export class Conversation {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @OneToOne(() => User, { nullable: false })
-    creator!: User;
+    @Column()
+    type!: "dialog" | "chat";
+
+    @Column({ nullable: true })
+    name?: string;
+
+    @Column()
+    creatorId!: number;
 
     @OneToMany(() => Message, message => message.conversation)
     messages!: Message[];
