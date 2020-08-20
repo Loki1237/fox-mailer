@@ -10,14 +10,14 @@ export class User {
     @Column()
     userName!: string;
 
-    @Column()
+    @Column({ select: false })
     passwordHash!: string;
 
-    @Column({ nullable: true })
-    firstName?: string;
+    @Column()
+    firstName!: string;
 
-    @Column({ nullable: true })
-    lastName?: string;
+    @Column()
+    lastName!: string;
 
     @ManyToMany(() => User, user => user.contacts)
     @JoinTable()
