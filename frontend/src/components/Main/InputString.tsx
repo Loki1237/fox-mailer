@@ -1,17 +1,17 @@
 import React from 'react';
-import styles from './Styles.m.css';
+import styles from './Styles.m.scss';
 
 import { IconButton, InputBase, TextField } from '@material-ui/core';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 import SendIcon from '@material-ui/icons/Send';
 
-const InputString = () => {
-    let [message, writeMessage] = React.useState("");
+interface Props {
+    message: string,
+    writeMessage: (e: React.ChangeEvent<HTMLTextAreaElement>) => void,
+    sendMessage: () => void
+}
 
-    const handleChangeTextField = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        writeMessage(e.target.value);
-    }
-
+const InputString = (props: Props) => {
     return (
         <div className={styles.InputString}>
             <IconButton aria-label="attach-file">
@@ -23,11 +23,15 @@ const InputString = () => {
                 style={{ flexGrow: 1, padding: "14px 0" }}
                 placeholder="Enter message"
                 autoFocus
-                value={message}
-                onChange={handleChangeTextField}
+                value={props.message}
+                onChange={props.writeMessage}
             />
 
-            <IconButton aria-label="send-message" color="primary" disabled={!message}>
+            <IconButton aria-label="send-message"
+                color="primary"
+                disabled={!props.message}
+                onClick={props.sendMessage}
+            >
                 <SendIcon />
             </IconButton>
         </div>
