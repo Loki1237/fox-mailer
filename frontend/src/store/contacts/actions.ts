@@ -14,12 +14,12 @@ import {
 } from './types';
 import _ from 'lodash';
 
-const setContactsIsFetching = (value: boolean): ContactsAction => ({
+const setIsFetching = (value: boolean): ContactsAction => ({
     type: SET_CONTACTS_IS_FETCHING,
     isFetching: value
 });
 
-const setContactsError = (value: string): ContactsAction => ({
+const setError = (value: string): ContactsAction => ({
     type: SET_CONTACTS_ERROR,
     error: value
 });
@@ -48,46 +48,37 @@ export const resetState = (): ContactsAction => ({
 
 export const findContacts = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        dispatch(setContactsIsFetching(true));
+        dispatch(setIsFetching(true));
+        const response = await fetch('/api/contacts');
 
-        try {
-            const response = await fetch('/api/contacts');
-
-            dispatch(setContactsIsFetching(false));
-            if (!response.ok) {
-                throw Error(response.statusText);
-            }
-
+        dispatch(setIsFetching(false));
+        if (response.ok) {
             const contacts = await response.json();
             dispatch(setContactList(contacts));
-        } catch(e) {
-            dispatch(setContactsError(e.message));
-            return Promise.reject(e.message);
+        } else {
+            dispatch(setError(response.statusText));
+            throw Error(response.statusText);
         }
     }
 };
 
 export const findUsers = (string: string, event: "buttonClick" | "listScroll"): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        dispatch(setContactsIsFetching(true));
+        dispatch(setIsFetching(true));
 
-        try {
-            const state = getState().contacts;
-            const skipCount = event === "listScroll" ? state.foundUsers.length : 0;
+        const state = getState().contacts;
+        const skipCount = event === "listScroll" ? state.foundUsers.length : 0;
 
-            const response = await fetch('/api/users/search', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json;charset=utf-8"
-                },
-                body: JSON.stringify({ string, skipCount })
-            });
+        const response = await fetch('/api/users/search', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json;charset=utf-8"
+            },
+            body: JSON.stringify({ string, skipCount })
+        });
 
-            dispatch(setContactsIsFetching(false));
-            if (!response.ok) {
-                throw Error(response.statusText);
-            }
-
+        dispatch(setIsFetching(false));
+        if (response.ok) {
             const newFoundUsers = await response.json();
             for (let user of newFoundUsers) {
                 user.inContacts = _.findIndex(state.contacts, { id: user.id }) >= 0;
@@ -99,22 +90,18 @@ export const findUsers = (string: string, event: "buttonClick" | "listScroll"): 
             } else {
                 dispatch(setFoundUserList(newFoundUsers));
             }
-        } catch(e) {
-            dispatch(setContactsError(e.message));
-            return Promise.reject(e.message);
+        } else {
+            dispatch(setError(response.statusText));
+            throw Error(response.statusText);
         }
     }
 };
 
 export const addContact = (id: number, index: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        try {
-            const response = await fetch(`/api/contacts/add/${id}`, { method: "PUT" });
+        const response = await fetch(`/api/contacts/add/${id}`, { method: "PUT" });
 
-            if (!response.ok) {
-                throw Error(response.statusText);
-            }
-
+        if (response.ok) {
             const state = getState().contacts;
 
             const newContact = await response.json();
@@ -131,30 +118,26 @@ export const addContact = (id: number, index: number): AppThunkAction => {
             dispatch(setContactList(state.contacts));
             dispatch(clearFoundUsers());
             dispatch(setFoundUserList(state.foundUsers));
-        } catch(e) {
-            dispatch(setContactsError(e.message));
-            return Promise.reject(e.message);
+        } else {
+            dispatch(setError(response.statusText));
+            throw Error(response.statusText);
         }
     }
 };
 
 export const deleteContact = (id: number, index: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        try {
-            const response = await fetch(`/api/contacts/delete/${id}`, { method: "DELETE" });
+        const response = await fetch(`/api/contacts/delete/${id}`, { method: "DELETE" });
 
-            if (!response.ok) {
-                throw Error(response.statusText);
-            }
-
+        if (response.ok) {
             const contacts = getState().contacts.contacts;
             contacts.splice(index, 1);
 
             dispatch(clearContacts());
             dispatch(setContactList(contacts));
-        } catch(e) {
-            dispatch(setContactsError(e.message));
-            return Promise.reject(e.message);
+        } else {
+            dispatch(setError(response.statusText));
+            throw Error(response.statusText);
         }
     }
 };

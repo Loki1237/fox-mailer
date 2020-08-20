@@ -59,6 +59,6 @@ export default function(state: ContactsState = initialState, action: ContactsAct
             return initialState;
 
         default:
-            return initialState;
+            return state;
     }
 }
