@@ -1,0 +1,22 @@
+.App {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+.side_menu_header {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: 200px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+
+    .user_data {
+        margin-left: 8px;
+    }
+}
