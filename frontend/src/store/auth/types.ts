@@ -1,5 +1,6 @@
 export const SET_AUTH_IS_FETCHING = "SET_AUTH_IS_FETCHING";
 export const SET_AUTH_ERROR = "SET_AUTH_ERROR";
+export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
 interface SetAuthIsFetching {
     type: typeof SET_AUTH_IS_FETCHING,
@@ -11,11 +12,24 @@ interface SetAuthError {
     error: string
 }
 
-export type AuthAction = SetAuthIsFetching | SetAuthError;
+interface SetCurrentUser {
+    type: typeof SET_CURRENT_USER,
+    payload: User | null
+}
+
+export type AuthAction = SetAuthIsFetching | SetAuthError | SetCurrentUser;
+
+export interface User {
+    id: number,
+    userName: string,
+    firstName: string,
+    lastName: string
+}
 
 export interface AuthState {
     isFetching: boolean,
-    error: string
+    error: string,
+    user: User | null
 }
 
 export interface LoginData {

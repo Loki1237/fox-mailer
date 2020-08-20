@@ -2,12 +2,14 @@ import {
     AuthState,
     AuthAction,
     SET_AUTH_IS_FETCHING,
-    SET_AUTH_ERROR
+    SET_AUTH_ERROR,
+    SET_CURRENT_USER
 } from './types';
 
 const initialState = {
     isFetching: false,
-    error: ""
+    error: "",
+    user: null
 };
 
 export default function(state: AuthState = initialState, action: AuthAction): AuthState {
@@ -24,7 +26,13 @@ export default function(state: AuthState = initialState, action: AuthAction): Au
                 error: action.error
             };
 
+        case SET_CURRENT_USER:
+            return {
+                ...state,
+                user: action.payload
+            };
+
         default:
-            return initialState;
+            return state;
     }
 }
