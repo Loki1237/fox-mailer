@@ -22,9 +22,9 @@ module.exports = {
 				test: /\.tsx?$/,
 				use: 'ts-loader',
 				exclude: /node_modules/
-			},
+            },
             {
-                test: /\.css$/,
+                test: /\.((c|sa|sc)ss)$/i,
                 use: [
                     'style-loader',
                     {
@@ -32,24 +32,28 @@ module.exports = {
                         options: {
                             modules: true
                         }
+                    },
+                    {
+                        loader: 'sass-loader'
                     }
                 ],
-                include: /\.m\.css$/
+                include: /\.m\.((c|sa|sc)ss)/
             },
             {
-                test: /\.css$/,
+                test: /\.((c|sa|sc)ss)$/i,
                 use: [
                     'style-loader',
-                    'css-loader'
+                    'css-loader',
+                    'sass-loader'
                 ],
-                exclude: /\.m\.css$/
+                exclude: /\.m\.((c|sa|sc)ss)/
             },
             {
                 test: /\.(png|woff|woff2)$/,
                 use: 'file-loader'
             }
 		]
-	},
+    },
 	plugins: [
 		new HtmlWebpackPlugin({
 			template: './src/index.html'
