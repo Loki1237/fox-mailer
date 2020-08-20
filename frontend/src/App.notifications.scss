@@ -1,0 +1,48 @@
+.Toastify__toast {
+    min-height: auto;
+    padding: 12px 14px 12px 44px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px 0px rgba(0, 0, 0, 0.5);
+    font-family: Roboto, sans-serif;
+
+    &::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        margin: auto;
+        left: 14px;
+        top: 0;
+        bottom: 0;
+        background-repeat: no-repeat;
+        background-size: contain;
+    }
+}
+.Toastify__toast--info {
+    background-color: #08F;
+
+    &:before {
+        background-image: url(./assets/icons/info.png);
+    }
+}
+.Toastify__toast--success {
+    background-color: #393;
+
+    &:before {
+        background-image: url(./assets/icons/success.png);
+    }
+}
+.Toastify__toast--warning {
+    background-color: #F80;
+
+    &:before {
+        background-image: url(./assets/icons/warning.png);
+    }
+}
+.Toastify__toast--error {
+    background-color: #F33;
+
+    &:before {
+        background-image: url(./assets/icons/error.png);
+    }
+}
