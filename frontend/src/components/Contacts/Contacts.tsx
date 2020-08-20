@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from './Styles.m.css';
+import styles from './Styles.m.scss';
+import { toast as notify } from 'react-toastify';
 
 import {
     Button,
@@ -20,7 +21,6 @@ import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CheckIcon from '@material-ui/icons/Check';
 
-import { withSnackbar, SnackbarMessage, OptionsObject } from 'notistack';
 import { connect } from 'react-redux';
 import { User } from '../../store/contacts/types';
 import {
@@ -31,14 +31,18 @@ import {
     deleteContact,
     clearFoundUsers
 } from '../../store/contacts/actions';
+import {
+    checkDialogToExistence,
+    createVoidDialog,
+    selectConversation
+} from '../../store/conversations/actions';
 import { RootState } from '../../store/index';
 import { AppThunkDispatch } from '../../store/thunk';
-import { history } from '../../App';
 import UserListItem from './UserListItem';
 import _ from 'lodash';
 
 interface Props {
-    open: boolean,
+    isOpened: boolean,
     onClose: () => void,
     isFetching: boolean,
     error: string,
@@ -49,7 +53,10 @@ interface Props {
     clearFoundUsers: () => void,
     resetState: () => void,
     addContact: (id: number, index: number) => void,
-    deleteContact: (id: number, index: number) => void
+    deleteContact: (id: number, index: number) => void,
+    checkDialogToExistence: (user: User) => Promise<number | null>,
+    createVoidDialog: (user: User) => void,
+    selectConversation: (id: number) => void
 }
 
 interface State {
@@ -65,11 +72,11 @@ class Contacts extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Props) {
-        if (this.props.open !== prevProps.open && this.props.open) {
+        if (this.props.isOpened !== prevProps.isOpened && this.props.isOpened) {
             this.props.findContacts();
         }
 
-        if (this.props.open !== prevProps.open && !this.props.open) {
+        if (this.props.isOpened !== prevProps.isOpened && !this.props.isOpened) {
             this.props.resetState();
             this.setState({ view: "contacts" });
         }
@@ -112,14 +119,25 @@ class Contacts extends React.Component<Props, State> {
         this.props.findUsers(this.state.search, "buttonClick");
     }
 
+    handleUserClick = async (user: User) => {
+        try {
+            const dialogId = await this.props.checkDialogToExistence(user);
+
+            if (dialogId) {
+                this.props.selectConversation(dialogId);
+            } else {
+                this.props.createVoidDialog(user);
+            }
+            this.props.onClose();
+        } catch (e) {
+            notify.error(e.message);
+        }
+    }
+
     render() {
         return (
-            <Dialog open={this.props.open}
-                onClose={this.props.onClose}
-                aria-labelledby="contacts-dialog-title"
-                aria-describedby="contacts-dialog-description"
-            >
-                <DialogTitle id="contacts-dialog-title">
+            <Dialog open={this.props.isOpened} onClose={this.props.onClose}>
+                <DialogTitle>
                     <span>{this.state.view === "contacts" ? "Contacts" : "Search"}</span>
 
                     {this.props.isFetching &&
@@ -138,6 +156,7 @@ class Contacts extends React.Component<Props, State> {
                                 return (
                                     <UserListItem key={user.id}
                                         user={user}
+                                        onClick={() => this.handleUserClick(user)}
                                         action={
                                             <IconButton onClick={() => this.props.deleteContact(user.id, i)}>
                                                 <DeleteIcon />
@@ -176,6 +195,7 @@ class Contacts extends React.Component<Props, State> {
                                     return (
                                         <UserListItem key={user.id}
                                             user={user}
+                                            onClick={() => this.handleUserClick(user)}
                                             action={
                                                 <IconButton disabled={user.inContacts}
                                                     onClick={() => this.props.addContact(user.id, i)}
@@ -230,7 +250,10 @@ const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
     clearFoundUsers: () => dispatch(clearFoundUsers()),
     resetState: () => dispatch(resetState()),
     addContact: (id: number, index: number) => dispatch(addContact(id, index)),
-    deleteContact: (id: number, index: number) => dispatch(deleteContact(id, index))
+    deleteContact: (id: number, index: number) => dispatch(deleteContact(id, index)),
+    checkDialogToExistence: (user: User) => dispatch(checkDialogToExistence(user)),
+    createVoidDialog: (user: User) => dispatch(createVoidDialog(user)),
+    selectConversation: (id: number) => dispatch(selectConversation(id))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Contacts);
