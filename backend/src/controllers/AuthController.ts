@@ -26,7 +26,12 @@ export class AuthController {
             return res.status(400).send(new AuthError('password is required'));
         }
 
-        const user = await userRepository.findOne({ userName });
+        const user = await userRepository.createQueryBuilder("user")
+            .select(["user.id", "user.userName", "user.firstName", "user.lastName"])
+            .addSelect("user.passwordHash")
+            .where("user.userName = :userName", { userName })
+            .getOne();
+
         if (!user) {
             return res.status(400).send(new AuthError('incorrect userName or password'));
         }
@@ -36,8 +41,15 @@ export class AuthController {
             return res.status(400).send(new AuthError('incorrect userName or password'));
         }
 
+        delete user.passwordHash;
         const token = jwt.sign({ id: user.id, userName }, process.env.JWT_SECRET);
-        return res.status(200).cookie('AUTH_TOKEN', token).send();
+        return res.status(200).cookie('AUTH_TOKEN', token).send(user);
+    }
+
+    @Post('/login/as')
+    async loginAs(@Req() req: Request, @Res() res: Response) {
+        delete req.session.user.passwordHash;
+        return res.status(200).cookie('AUTH_TOKEN', req.cookies.AUTH_TOKEN).send(req.session.user);
     }
 
     @Post('/logout')
