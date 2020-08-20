@@ -25,6 +25,7 @@ import { LoginData } from '../../store/auth/types';
 import { history } from '../../App';
 
 interface Props {
+    smallScreenMode: boolean,
     isFetching: boolean,
     error: string,
     login: (data: LoginData) => void
@@ -35,6 +36,20 @@ class Login extends React.Component<Props>  {
         userName: "",
         password: "",
         showPassword: false
+    }
+
+    componentDidMount() {
+        window.addEventListener("keypress", this.handlePressKeyEnter);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("keypress", this.handlePressKeyEnter);
+    }
+
+    handlePressKeyEnter = (e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+            this.login();
+        }
     }
 
     handleChangeTextField = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,12 +79,15 @@ class Login extends React.Component<Props>  {
     render() {
         return (
             <div className={styles.Auth}>
-                <img src={logo} alt="Fox" className={styles.logo} />
+                {!this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo} />}
 
                 <form className={styles.form}>
-                    <Typography variant="h3" color="primary" align="left">
-                        Fox mailer
-                    </Typography>
+                    <div className={styles.header}>
+                        {this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo_small} />}
+                        <Typography variant="h3" color="primary" align="left">
+                            Fox mailer
+                        </Typography>
+                    </div>
 
                     <TextField fullWidth
                         label="Username"

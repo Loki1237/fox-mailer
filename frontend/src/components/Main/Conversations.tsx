@@ -10,7 +10,6 @@ import { AppThunkDispatch } from '../../store/thunk';
 import ConversationListItem from './ConversationListItem';
 
 import {
-    Avatar,
     Button,
     Dialog,
     DialogActions,
@@ -21,6 +20,7 @@ import {
 } from '@material-ui/core';
 
 interface Props {
+    fullScreen: boolean,
     isFetching: boolean
     error: string,
     conversations: Conversation[],
@@ -80,7 +80,7 @@ class Conversations extends React.Component<Props, State> {
 
     render() {
         return (
-            <div className={styles.Conversations}>
+            <div className={styles.Conversations} style={{ width: this.props.fullScreen ? "100%" : "35%" }}>
                 <List>
                     {this.props.conversations.map(conversation => {
                         return (

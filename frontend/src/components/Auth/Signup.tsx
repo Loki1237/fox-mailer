@@ -26,6 +26,7 @@ import { SignupData } from '../../store/auth/types';
 import { history } from '../../App';
 
 interface Props {
+    smallScreenMode: boolean,
     isFetching: boolean,
     error: string,
     signup: (data: SignupData) => void
@@ -40,6 +41,20 @@ class Login extends React.Component<Props>  {
         showPassword: false
     }
 
+    componentDidMount() {
+        window.addEventListener("keypress", this.handlePressKeyEnter);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("keypress", this.handlePressKeyEnter);
+    }
+
+    handlePressKeyEnter = (e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+            this.signup();
+        }
+    }
+
     handleChangeTextField = (e: React.ChangeEvent<HTMLInputElement>) => {
         this.setState({ [e.target.name]: e.target.value });
     }
@@ -51,8 +66,14 @@ class Login extends React.Component<Props>  {
     signup = async () => {
         const { firstName, lastName, userName, password } = this.state;
 
-        if (!userName || !password) {
-            notify.warn("Username and password is required");
+        if (!firstName) {
+            notify.warn("Please, enter your first name");
+            return;
+        } else if (firstName && !userName) {
+            notify.warn("Please, enter your username");
+            return;
+        } else if (firstName && userName && !password) {
+            notify.warn("Please, enter your password");
             return;
         }
 
@@ -68,16 +89,20 @@ class Login extends React.Component<Props>  {
     render() {
         return (
             <div className={styles.Auth}>
-                <img src={logo} alt="Fox" className={styles.logo} />
+                {!this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo} />}
 
                 <form className={styles.form}>
-                    <Typography variant="h3" color="primary" align="left">
-                        Fox mailer
-                    </Typography>
+                    <div className={styles.header}>
+                        {this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo_small} />}
+                        <Typography variant="h3" color="primary" align="left">
+                            Fox mailer
+                        </Typography>
+                    </div>
 
                     <TextField fullWidth
                         label="First name"
                         margin="dense"
+                        required
                         name="firstName"
                         autoFocus
                         value={this.state.firstName}

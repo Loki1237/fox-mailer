@@ -50,18 +50,31 @@ interface Props {
 interface State {
     sideMenu: boolean,
     contactWindow: boolean,
-    creatingChatWindow: boolean
+    creatingChatWindow: boolean,
+    smallScreenMode: boolean
 }
 
 class App extends React.Component<Props, State> {
     state: State = {
         sideMenu: false,
         contactWindow: false,
-        creatingChatWindow: false
+        creatingChatWindow: false,
+        smallScreenMode: false
     }
 
     componentDidMount() {
         this.loginAs();
+        this.setSmallScreenMode();
+        window.addEventListener("resize", this.setSmallScreenMode);
+    }
+
+    setSmallScreenMode = () => {
+        const screenWidth = document.body.clientWidth;
+        if (screenWidth <= 620) {
+            this.setState({ smallScreenMode: true });
+        } else {
+            this.setState({ smallScreenMode: false });
+        }
     }
 
     loginAs = async () => {
@@ -116,15 +129,15 @@ class App extends React.Component<Props, State> {
 
                 <Router history={history}>
                     <Route path='/login'>
-                        <Login />
+                        <Login smallScreenMode={this.state.smallScreenMode} />
                     </Route>
 
                     <Route path='/signup'>
-                        <Signup />
+                        <Signup smallScreenMode={this.state.smallScreenMode} />
                     </Route>
 
                     <Route path='/main'>
-                        <Main />
+                        <Main smallScreenMode={this.state.smallScreenMode} />
                     </Route>
 
                     <Route path='/'>

@@ -210,7 +210,9 @@ class Messages extends React.Component<Props, State> {
                     {this.props.currentConversation === null &&
                         <div className={styles.void_conversation_message}>
                             <div>
-                                <Typography>Please select a conversation or create a new one</Typography>
+                                <Typography variant="body2">
+                                    Please select a conversation or create a new one
+                                </Typography>
                             </div>
                         </div>
                     }
@@ -236,13 +238,14 @@ class Messages extends React.Component<Props, State> {
                         <List dense>
                             {this.props.currentConversation?.participants.map(user => {
                                 const fullName = user.firstName + " " + user.lastName;
+                                const userName = user.userName;
 
                                 return (
                                     <ListItem key={user.id} dense>
                                         <ListItemAvatar>
                                             <Avatar>{user.firstName[0]}</Avatar>
                                         </ListItemAvatar>
-                                        <ListItemText primary={fullName} />
+                                        <ListItemText primary={fullName} secondary={userName} />
                                     </ListItem>
                                 );
                             })}
