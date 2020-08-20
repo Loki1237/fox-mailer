@@ -14,26 +14,26 @@ export const authentification: Handler = async (req, res, next) => {
 
     try {
         if (!process.env.JWT_SECRET) {
-            throw new Error();
+            throw new Error('JWT_SECRET is required');
         }
 
         if (!token) {
-            throw new Error();
+            throw new Error('AUTH_TOKEN is required');
         }
 
         interface DecodedToken { id: number, userName: string, iat: string };
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET) as DecodedToken;
 
         if (!decodedToken) {
-            throw new Error();
+            throw new Error('invalid AUTH_TOKEN');
         }
 
         const userRepository = getRepository(User);
         const user = await userRepository.findOne({ id: decodedToken.id });
-        req.body.user = user;
+        req.session = { user };
 
         return next();
-    } catch {
-        return res.status(401).send();
+    } catch (e) {
+        return res.status(401).send(e.message);
     }
 };
