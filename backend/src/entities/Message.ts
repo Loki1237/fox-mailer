@@ -1,5 +1,4 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from './User';
 import { Conversation } from './Conversation';
 
 @Entity("messages")
@@ -8,11 +7,11 @@ export class Message {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @ManyToOne(() => Conversation)
+    @ManyToOne(() => Conversation, { onDelete: "CASCADE" })
     conversation!: Conversation;
 
-    @OneToOne(() => User)
-    author!: User;
+    @Column()
+    authorId!: number;
 
     @Column()
     text!: string;
