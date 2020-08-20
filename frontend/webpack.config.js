@@ -49,7 +49,7 @@ module.exports = {
                 exclude: /\.m\.((c|sa|sc)ss)/
             },
             {
-                test: /\.(png|woff|woff2)$/,
+                test: /\.(png|mp3|woff|woff2)$/,
                 use: 'file-loader'
             }
 		]
