@@ -13,6 +13,7 @@ import {
     RESET_CONTACTS_STATE
 } from './types';
 import _ from 'lodash';
+import { httpRequest } from '../httpRequest';
 
 const setIsFetching = (value: boolean): ContactsAction => ({
     type: SET_CONTACTS_IS_FETCHING,
@@ -49,7 +50,7 @@ export const resetState = (): ContactsAction => ({
 export const findContacts = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
         dispatch(setIsFetching(true));
-        const response = await fetch('/api/contacts');
+        const response = await httpRequest("GET", '/api/contacts').send();
 
         dispatch(setIsFetching(false));
         if (response.ok) {
@@ -69,13 +70,7 @@ export const findUsers = (string: string, event: "buttonClick" | "listScroll"): 
         const state = getState().contacts;
         const skipCount = event === "listScroll" ? state.foundUsers.length : 0;
 
-        const response = await fetch('/api/users/search', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charset=utf-8"
-            },
-            body: JSON.stringify({ string, skipCount })
-        });
+        const response = await httpRequest("POST", '/api/users/search').json({ string, skipCount }).send();
 
         dispatch(setIsFetching(false));
         if (response.ok) {
@@ -99,7 +94,7 @@ export const findUsers = (string: string, event: "buttonClick" | "listScroll"): 
 
 export const addContact = (id: number, index: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        const response = await fetch(`/api/contacts/add/${id}`, { method: "PUT" });
+        const response = await httpRequest("PUT", `/api/contacts/add/${id}`).send();
 
         if (response.ok) {
             const state = getState().contacts;
@@ -127,7 +122,7 @@ export const addContact = (id: number, index: number): AppThunkAction => {
 
 export const deleteContact = (id: number, index: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        const response = await fetch(`/api/contacts/delete/${id}`, { method: "DELETE" });
+        const response = await httpRequest("DELETE", `/api/contacts/delete/${id}`).send();
 
         if (response.ok) {
             const contacts = getState().contacts.contacts;

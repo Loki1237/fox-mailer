@@ -9,6 +9,7 @@ import {
     LoginData,
     SignupData
 } from './types';
+import { httpRequest } from '../httpRequest';
 
 const setIsFetching = (value: boolean): AuthAction => ({
     type: SET_AUTH_IS_FETCHING,
@@ -28,13 +29,7 @@ export const setCurrentUser = (payload: User | null): AuthAction => ({
 export const login = (data: LoginData): AppThunkAction => {
     return async (dispatch: Dispatch) => {
         dispatch(setIsFetching(true));
-        const response = await fetch('/api/login', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charser=utf-8"
-            },
-            body: JSON.stringify(data)
-        });
+        const response = await httpRequest("POST", '/api/login').json(data).send();
 
         dispatch(setIsFetching(false));
         if (response.ok) {
@@ -50,7 +45,7 @@ export const login = (data: LoginData): AppThunkAction => {
 
 export const loginAs = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        const response = await fetch('/api/login/as', { method: "POST" });
+        const response = await httpRequest("POST", '/api/login/as').send();
 
         if (response.ok) {
             const user = await response.json();
@@ -64,7 +59,7 @@ export const loginAs = (): AppThunkAction => {
 
 export const logout = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        const response = await fetch('/api/logout', { method: "POST" });
+        const response = await httpRequest("POST", '/api/logout').send();
 
         if (response.ok) {
             dispatch(setCurrentUser(null));
@@ -78,13 +73,7 @@ export const logout = (): AppThunkAction => {
 export const signup = (data: SignupData): AppThunkAction => {
     return async (dispatch: Dispatch) => {
         dispatch(setIsFetching(true));
-        const response = await fetch('/api/signup', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charser=utf-8"
-            },
-            body: JSON.stringify(data)
-        });
+        const response = await httpRequest("POST", '/api/signup').json(data).send();
 
         dispatch(setIsFetching(false));
         if (!response.ok) {

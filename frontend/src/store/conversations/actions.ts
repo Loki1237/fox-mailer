@@ -10,10 +10,12 @@ import {
     SET_CONVERSATIONS_ERROR,
     SET_CONVERSATION_LIST,
     SET_CURRENT_CONVERSATION,
+    SET_CURRENT_MESSAGE_LIST,
     ADD_MESSAGE_IN_CURRENT_CONVERSATION,
     RESET_CURRENT_CONVERSATION
 } from './types';
 import _ from 'lodash';
+import { httpRequest } from '../httpRequest';
 
 const setIsFetching = (value: boolean): ConversationsAction => ({
     type: SET_CONVERSATIONS_IS_FETCHING,
@@ -35,6 +37,11 @@ const setCurrentConversation = (payload: Conversation): ConversationsAction => (
     payload
 });
 
+const setCurrentMessageList = (payload: Message[]): ConversationsAction => ({
+    type: SET_CURRENT_MESSAGE_LIST,
+    payload
+});
+
 export const addMessageInCurrentConversation = (payload: Message): ConversationsAction => ({
     type: ADD_MESSAGE_IN_CURRENT_CONVERSATION,
     payload
@@ -47,7 +54,7 @@ export const resetCurrentConversation = (): ConversationsAction => ({
 export const getConversations = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
         dispatch(setIsFetching(true));
-        const response = await fetch('/api/conversations/get/all');
+        const response = await httpRequest("GET", '/api/conversations/get/all').send();
 
         dispatch(setIsFetching(false));
         if (response.ok) {
@@ -60,28 +67,67 @@ export const getConversations = (): AppThunkAction => {
     }
 };
 
-export const selectConversation = (id: number): AppThunkAction => {
-    return async (dispatch: Dispatch) => {
-        const response = await fetch(`/api/conversations/get/one/${id}`);
+export const getMessages = (conversationId: number): AppThunkAction => {
+    return async (dispatch: Dispatch, getState: () => RootState) => {
+        const currentConversation = getState().conversations.currentConversation;
+        const response = await httpRequest("POST", '/api/conversations/get/all')
+            .json({ conversationId, skip: currentConversation?.messages.length })
+            .send();
 
         if (response.ok) {
-            const conversation = await response.json();
-            dispatch(setCurrentConversation(conversation));
+            const conversations = await response.json();
+            dispatch(setConversationList(conversations));
         } else {
+            dispatch(setError(response.statusText));
             throw Error(response.statusText);
+        }
+    }
+};
+
+export const addConversationToList = (id: number): AppThunkAction => {
+    return async (dispatch: Dispatch, getState: () => RootState) => {
+        const response = await httpRequest("GET", `/api/conversations/get/one/${id}`).send();
+
+        if (response.ok) {
+            const conversations = getState().conversations.conversations;
+            const newConversation = await response.json();
+            dispatch(setConversationList([newConversation, ...conversations]));
+        } else {
+            dispatch(setError(response.statusText));
+            throw Error(response.statusText);
+        }
+    }
+};
+
+export const selectConversation = (id: number): AppThunkAction => {
+    return async (dispatch: Dispatch) => {
+        const conversationResponse = await httpRequest("GET", `/api/conversations/get/one/${id}`).send();
+
+        if (conversationResponse.ok) {
+            const conversation = await conversationResponse.json();
+            dispatch(setCurrentConversation(conversation));
+
+            const messagesResponse = await httpRequest("POST", '/api/messages/get/many')
+                .json({ conversationId: conversation.id })
+                .send();
+
+            if (messagesResponse.ok) {
+                const messages = await messagesResponse.json();
+                dispatch(setCurrentMessageList(messages));
+            } else {
+                throw Error(messagesResponse.statusText);
+            }
+        } else {
+            throw Error(conversationResponse.statusText);
         }
     }
 };
 
 export const checkDialogToExistence = (user: User): AppThunkAction<Promise<number | null>> => {
     return async () => {
-        const response = await fetch(`/api/conversations/check/dialog`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charset=utf-8"
-            },
-            body: JSON.stringify({ interlocutorId: user.id })
-        });
+        const response = await httpRequest("POST", '/api/conversations/check/dialog')
+            .json({ interlocutorId: user.id })
+            .send();
 
         switch (response.status) {
             case 200:
@@ -127,13 +173,7 @@ export const createVoidDialog = (user: User): AppThunkAction => {
 
 export const createDialog = (interlocutorId: number): AppThunkAction<Promise<number>> => {
     return async (dispatch: AppThunkDispatch, getState: () => RootState) => {
-        const response = await fetch(`/api/conversations/create/dialog`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charset=utf-8"
-            },
-            body: JSON.stringify({ interlocutorId })
-        });
+        const response = await httpRequest("POST", `/api/conversations/create/dialog`).json({ interlocutorId }).send();
 
         if (response.ok) {
             const conversations = getState().conversations.conversations;
@@ -148,13 +188,7 @@ export const createDialog = (interlocutorId: number): AppThunkAction<Promise<num
 
 export const createChat = (name: string, userIds: number[]): AppThunkAction<Promise<number>> => {
     return async (dispatch: AppThunkDispatch, getState: () => RootState) => {
-        const response = await fetch(`/api/conversations/create/chat`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json;charset=utf-8"
-            },
-            body: JSON.stringify({ name, userIds })
-        });
+        const response = await httpRequest("POST", '/api/conversations/create/chat').json({ name, userIds }).send();
 
         if (response.ok) {
             const conversations = getState().conversations.conversations;
@@ -169,7 +203,7 @@ export const createChat = (name: string, userIds: number[]): AppThunkAction<Prom
 
 export const deleteConversation = (id: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        const response = await fetch(`/api/conversations/delete/${id}`, { method: "DELETE", });
+        const response = await httpRequest("DELETE", `/api/conversations/delete/${id}`).send();
 
         if (response.ok) {
             const state = getState().conversations;
