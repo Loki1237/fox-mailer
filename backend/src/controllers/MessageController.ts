@@ -1,9 +1,17 @@
 import { Controller, Get, Post, Put, Delete, Req, Res } from 'routing-controllers';
 import { Request, Response } from 'express';
-import { getRepository, createQueryBuilder } from 'typeorm';
+import { getRepository } from 'typeorm';
 import { Conversation } from '../entities/Conversation';
 import { Message } from '../entities/Message';
 import { User } from '../entities/User';
+
+const setDialogName = (user: User, participants: User[]) => {
+    if (participants[0].id !== user.id) {
+        return `${participants[0].firstName} ${participants[0].lastName}`;
+    } else {
+        return `${participants[1].firstName} ${participants[1].lastName}`;
+    }
+};
 
 @Controller()
 export class MessageController {
@@ -33,15 +41,9 @@ export class MessageController {
             return res.status(400).send("user not found");
         }
 
-        // Для диалогов - установить поле "name" = имя + фамилия собеседника
         for (let conversation of user.conversations) {
             if (conversation.type === "dialog") {
-                let participants = conversation.participants;
-                if (participants[0].id !== req.session.user.id) {
-                    conversation.name = `${participants[0].firstName} ${participants[0].lastName}`;
-                } else {
-                    conversation.name = `${participants[1].firstName} ${participants[1].lastName}`;
-                }
+                conversation.name = setDialogName(req.session.user, conversation.participants);
             }
         }
 
@@ -61,24 +63,48 @@ export class MessageController {
                 { conversationId: +req.params.id }
             )
             .leftJoinAndSelect("conversation.participants", "participant")
-            .leftJoinAndSelect("conversation.messages", "message")
-            .orderBy("message.id", "DESC")
             .getOne();
 
         if (!user) {
-            return res.status(404).send();
+            return res.status(400).send("conversation not found");
         }
 
         const conversation = user.conversations[0];
+        conversation.messages = [];
+
         if (conversation.type === "dialog") {
-            for (let participant of conversation.participants) {
-                if (participant.id !== req.session.user.id) {
-                    conversation.name = `${participant.firstName} ${participant.lastName}`;
-                }
-            }
+            conversation.name = setDialogName(req.session.user, conversation.participants);
         }
 
         return res.status(200).send(conversation);
+    }
+
+    @Post('/messages/get/many')
+    async getMessages(@Req() req: Request, @Res() res: Response) {
+        const { conversationId, skip } = req.body;
+
+        const conversationRepository = getRepository(Conversation);
+        const conversation = await conversationRepository
+            .createQueryBuilder("conversation")
+            .where("conversation.id = :conversationId", { conversationId })
+            .innerJoin("conversation.participants", "participant", "participant.id = :id", { id: req.session.user.id })
+            .getOne();
+
+        if (!conversation) {
+            return res.status(400).send("conversation not found");
+        }
+
+        const messageRepository = getRepository(Message);
+        const messages = await messageRepository
+            .createQueryBuilder("message")
+            .leftJoin("message.conversation", "conversation", "conversation.id = :conversationId", { conversationId })
+            .where("conversation.id = :conversationId")
+            .orderBy({ "message.id": "DESC" })
+            .skip(skip)
+            .take(30)
+            .getMany();
+
+        return res.status(200).send(messages);
     }
 
     @Post('/conversations/check/dialog')
