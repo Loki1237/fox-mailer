@@ -1,4 +1,4 @@
-import { Message } from './conversationsTypes';
+import { Message, Conversation } from './conversationsTypes';
 
 export interface WebSocketState {
     connected: boolean,
@@ -26,7 +26,7 @@ export interface WsActionMessage extends WebSocketMessage {
     type: "action",
     content: {
         action: "create_conversation" | "delete_conversation",
-        data: any
+        data: Conversation
     }
 }
 
