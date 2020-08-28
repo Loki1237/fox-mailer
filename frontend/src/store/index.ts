@@ -1,9 +1,11 @@
 import { combineReducers } from 'redux';
-import authReducer from './auth/reducer';
-import contactsReducer from './contacts/reducer';
-import conversationsReducer from './conversations/reducer';
+import appReducer from '../reducers/appReducer';
+import authReducer from '../reducers/authReducer';
+import contactsReducer from '../reducers/contactsReducer';
+import conversationsReducer from '../reducers/conversationsReducer';
 
 export const rootReducer = combineReducers({
+    app: appReducer,
     auth: authReducer,
     contacts: contactsReducer,
     conversations: conversationsReducer
