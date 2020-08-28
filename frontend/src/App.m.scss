@@ -7,16 +7,3 @@
     left: 0;
     top: 0;
 }
-
-.side_menu_header {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    width: 200px;
-    box-sizing: border-box;
-    padding: 8px 12px;
-
-    .user_data {
-        margin-left: 8px;
-    }
-}
