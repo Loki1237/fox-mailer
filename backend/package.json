@@ -1,5 +1,5 @@
 {
-    "name": "messenger-backend",
+    "name": "fox-mailer-backend",
     "version": "0.0.1",
     "description": "",
     "scripts": {
@@ -8,14 +8,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/kirill-aleksandrov/messenger.git"
+        "url": "git+https://github.com/Loki1237/fox-mailer.git"
     },
-    "author": "Kirill Aleksandrov (aleksandrov.k.v@ya.ru)",
+    "author": "Denis Chainikov",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/kirill-aleksandrov/messenger/issues"
+        "url": "https://github.com/Loki1237/fox-mailer/issues"
     },
-    "homepage": "https://github.com/kirill-aleksandrov/messenger#readme",
+    "homepage": "https://github.com/Loki1237/fox-mailer",
     "private": true,
     "dependencies": {
         "bcrypt": "^4.0.1",
