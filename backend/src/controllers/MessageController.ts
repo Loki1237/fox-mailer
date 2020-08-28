@@ -4,6 +4,7 @@ import { getRepository } from 'typeorm';
 import { Conversation } from '../entities/Conversation';
 import { Message } from '../entities/Message';
 import { User } from '../entities/User';
+import { clients, WsActionMessage } from '../web_socket/messages';
 
 const setDialogName = (user: User, participants: User[]) => {
     if (participants[0].id !== user.id) {
@@ -26,15 +27,15 @@ export class MessageController {
             .leftJoinAndSelect(
                 "conversation.messages",
                 "message",
-                "message.id = " + qb.subQuery()
-                                    .select("MAX(message.id)")
-                                    .from(Message, "message")
-                                    .leftJoin("message.conversation", "message_conversation")
-                                    .where("message_conversation.id = conversation.id")
-                                    .getQuery()
+                "message.createdAt = " + qb.subQuery()
+                                           .select("MAX(message.createdAt)")
+                                           .from(Message, "message")
+                                           .leftJoin("message.conversation", "message_conversation")
+                                           .where("message_conversation.id = conversation.id")
+                                           .getQuery()
             )
             .leftJoinAndSelect("conversation.participants", "participant", "conversation.type = 'dialog'")
-            .orderBy("message.id", "DESC")
+            .orderBy("message.createdAt", "DESC")
             .getOne();
 
         if (!user) {
@@ -99,7 +100,7 @@ export class MessageController {
             .createQueryBuilder("message")
             .leftJoin("message.conversation", "conversation", "conversation.id = :conversationId", { conversationId })
             .where("conversation.id = :conversationId")
-            .orderBy({ "message.id": "DESC" })
+            .orderBy({ "message.createdAt": "DESC" })
             .skip(skip)
             .take(30)
             .getMany();
@@ -178,12 +179,31 @@ export class MessageController {
         });
         const createdDialog = await conversationRepository.save(newDialog);
 
-        for (let participant of createdDialog.participants) {
-            if (participant.id !== req.session.user.id) {
-                createdDialog.name = `${participant.firstName} ${participant.lastName}`;
-            }
+        const messageRepository = getRepository(Message);
+        const newMessage = await messageRepository.create({
+            conversation: createdDialog,
+            authorId: req.session.user.id,
+            text: req.body.firstMessage,
+            createdAt: new Date()
+        });
+        await messageRepository.save(newMessage);
+        createdDialog.messages = [newMessage];
+
+        const client = clients.get(interlocutor.id);
+        if (client) {
+            createdDialog.name = `${req.session.user.firstName} ${req.session.user.lastName}`;
+
+            const wsMessage: WsActionMessage = {
+                type: "action",
+                content: {
+                    action: "create_conversation",
+                    data: createdDialog
+                }
+            };
+            client.send(JSON.stringify(wsMessage));
         }
 
+        createdDialog.name = `${interlocutor.firstName} ${interlocutor.lastName}`;
         return res.status(200).send(createdDialog);
     }
 
@@ -215,6 +235,21 @@ export class MessageController {
         });
         const createdChat = await conversationRepository.save(newChat);
 
+        const wsMessage: WsActionMessage = {
+            type: "action",
+            content: {
+                action: "create_conversation",
+                data: createdChat
+            }
+        };
+
+        for (let participant of createdChat.participants) {
+            const client = clients.get(participant.id);
+            if (client && participant.id !== req.session.user.id) {
+                client.send(JSON.stringify(wsMessage));
+            }
+        }
+
         return res.status(200).send(createdChat);
     }
 
@@ -230,6 +265,7 @@ export class MessageController {
                 "conversation.id = :conversationId",
                 { conversationId: +req.params.id }
             )
+            .leftJoinAndSelect("conversation.participants", "participant")
             .getOne();
 
         if (!user) {
@@ -238,6 +274,22 @@ export class MessageController {
 
         const conversationRepository = getRepository(Conversation);
         await conversationRepository.delete({ id: +req.params.id });
+
+        const deletedConversation = user.conversations[0];
+        const wsMessage: WsActionMessage = {
+            type: "action",
+            content: {
+                action: "delete_conversation",
+                data: deletedConversation
+            }
+        };
+
+        for (let participant of deletedConversation.participants) {
+            const client = clients.get(participant.id);
+            if (client && participant.id !== req.session.user.id) {
+                client.send(JSON.stringify(wsMessage));
+            }
+        }
 
         return res.status(200).send();
     }
