@@ -17,17 +17,13 @@ import {
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 
 import { Link } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { RootState } from '../../store/index';
-import { AppThunkDispatch } from '../../store/thunk';
-import { login } from '../../store/auth/actions';
-import { LoginData } from '../../store/auth/types';
+import { LoginData } from '../../types/authTypes';
 import { history } from '../../App';
 
 interface Props {
-    smallScreenMode: boolean,
+    screenMode: "full" | "small",
     isFetching: boolean,
-    error: string,
+    error: string | null,
     login: (data: LoginData) => void
 }
 
@@ -79,11 +75,12 @@ class Login extends React.Component<Props>  {
     render() {
         return (
             <div className={styles.Auth}>
-                {!this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo} />}
+                {this.props.screenMode === "full" && <img src={logo} alt="Fox" className={styles.logo} />}
 
                 <form className={styles.form}>
                     <div className={styles.header}>
-                        {this.props.smallScreenMode && <img src={logo} alt="Fox" className={styles.logo_small} />}
+                        {this.props.screenMode === "small" && <img src={logo} alt="Fox" className={styles.logo_small} />}
+
                         <Typography variant="h3" color="primary" align="left">
                             Fox mailer
                         </Typography>
@@ -141,13 +138,4 @@ class Login extends React.Component<Props>  {
     }
 }
 
-const mapStateToProps = (state: RootState) => ({
-    isFetching: state.auth.isFetching,
-    error: state.auth.error
-});
-
-const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    login: (data: LoginData) => dispatch(login(data))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default Login;

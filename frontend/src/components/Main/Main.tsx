@@ -1,31 +1,24 @@
 import React from 'react';
 import styles from './Styles.m.scss';
-import Conversations from './Conversations';
-import Messages from './Messages';
-
-import { connect } from 'react-redux';
-import { RootState } from '../../store/index';
-import { Conversation } from '../../store/conversations/types';
+import Conversations from '../../containers/Conversations';
+import Messages from '../../containers/Messages';
+import { Conversation } from '../../types/conversationsTypes';
 
 interface Props {
     currentConversation: Conversation | null,
-    smallScreenMode: boolean
+    screenMode: "full" | "small"
 }
 
 const Main = (props: Props) => {
-    const renderConversations = !props.currentConversation || !props.smallScreenMode;
-    const renderMessages = props.currentConversation || !props.smallScreenMode;
+    const renderConversations = !props.currentConversation || props.screenMode === "full";
+    const renderMessages = props.currentConversation || props.screenMode === "full";
 
     return (
         <div className={styles.Main}>
-            {renderConversations && <Conversations fullScreen={props.smallScreenMode} />}
+            {renderConversations && <Conversations />}
             {renderMessages && <Messages />}
         </div>
     );
 };
 
-const mapStateToProps = (state: RootState) => ({
-    currentConversation: state.conversations.currentConversation
-});
-
-export default connect(mapStateToProps)(Main);
+export default Main;

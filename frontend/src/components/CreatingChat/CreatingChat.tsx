@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
 import _ from 'lodash';
+import { User } from '../../types';
 import UserListItem from './UserListItem';
 
 import {
@@ -14,23 +15,15 @@ import {
     TextField
 } from '@material-ui/core';
 
-import { connect } from 'react-redux';
-import { User } from '../../store/contacts/types';
-import { findContacts, resetState, } from '../../store/contacts/actions';
-import { createChat, selectConversation } from '../../store/conversations/actions';
-import { RootState } from '../../store/index';
-import { AppThunkDispatch } from '../../store/thunk';
-
 interface Props {
     isOpened: boolean,
     onClose: () => void,
     isFetching: boolean,
-    error: string,
+    error: string | null,
     contacts: User[],
     findContacts: () => void,
     resetContactsState: () => void,
-    createChat: (name: string, userIds: number[]) => Promise<number>,
-    selectConversation: (id: number) => void
+    createChatAndSelect: (name: string, userIds: number[]) => void
 }
 
 interface State {
@@ -82,8 +75,7 @@ class CreatingChat extends React.Component<Props, State> {
         }
 
         try {
-            const newChatId = await this.props.createChat(chatName, userIds);
-            await this.props.selectConversation(newChatId);
+            await this.props.createChatAndSelect(chatName, userIds);
             this.props.onClose();
         } catch (e) {
             notify.error(e.message);
@@ -129,17 +121,4 @@ class CreatingChat extends React.Component<Props, State> {
     }
 }
 
-const mapStateToProps = (state: RootState) => ({
-    isFetching: state.contacts.isFetching,
-    error: state.contacts.error,
-    contacts: state.contacts.contacts
-});
-
-const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    findContacts: () => dispatch(findContacts()),
-    resetContactsState: () => dispatch(resetState()),
-    createChat: (name: string, userIds: number[]) => dispatch(createChat(name, userIds)),
-    selectConversation: (id: number) => dispatch(selectConversation(id))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(CreatingChat);
+export default CreatingChat;

@@ -2,28 +2,20 @@
  * TODO: добавить имя автора для каждого сообщения в чатах
  *       подправить функцию createDate
  *       сделать поиск сообщений
+ *       сделать добавление пользователей в чат
  */
 
 import React from 'react';
 import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
-import messageSound from '../../assets/sounds/message.mp3';
+import _ from 'lodash';
 
 import InputString from './InputString';
 import MessageListItem from './MessageListItem';
 
-import { connect } from 'react-redux';
-import {
-    resetCurrentConversation,
-    addMessageInCurrentConversation,
-    setLastMessageInConversation,
-    createDialog,
-    selectConversation
-} from '../../store/conversations/actions';
-import { RootState } from '../../store/index';
-import { AppThunkDispatch } from '../../store/thunk';
-import { Conversation, Message } from '../../store/conversations/types';
-import { User } from '../../store/auth/types';
+import { Conversation, Message } from '../../types/conversationsTypes';
+import { WsOutgoingTextMessage } from '../../types/webSocketTypes';
+import { User } from '../../types';
 
 import {
     Avatar,
@@ -44,15 +36,14 @@ import InfoIcon from '@material-ui/icons/InfoOutlined';
 
 interface Props {
     isFetching: boolean
-    error: string,
+    error: string | null,
     conversations: Conversation[],
     currentConversation: Conversation | null,
     currentUser: User | null,
     resetCurrentConversation: () => void,
-    addMessageInCurrentConversation: (message: Message) => void,
-    setLastMessageInConversation: (conversationId: number, message: Message) => void,
-    createDialog: (interlocutorId: number) => Promise<number>,
-    selectConversation: (id: number) => void
+    createDialogAndSelect: (interlocutorId: number, firstMessageText: string) => void,
+    getMessages: () => void,
+    sendWebSocketMessage: (conversationId: number, text: string) => void
 }
 
 interface State {
@@ -61,41 +52,19 @@ interface State {
 }
 
 class Messages extends React.Component<Props, State> {
-    messagesWebSocket: WebSocket = new WebSocket('ws://localhost:3000/messages');
-    messageSound: HTMLAudioElement = new Audio(messageSound);
+    messageListRef: React.RefObject<HTMLDivElement> = React.createRef();
     state: State = {
         message: "",
         chatDataWindow: false
     }
 
     componentDidMount() {
-        this.messagesWebSocket.addEventListener("message", this.handleReceiveMessage);
+        window.addEventListener("keydown", this.handlePressKeyEsc);
     }
 
-    handleReceiveMessage = (message: MessageEvent) => {
-        const currentConversation = this.props.currentConversation;
-        const parsedMessage: Message = JSON.parse(message.data);
-
-        this.props.setLastMessageInConversation(parsedMessage.conversationId, parsedMessage);
-        if (currentConversation && parsedMessage.conversationId === currentConversation.id) {
-            this.props.addMessageInCurrentConversation(parsedMessage);
-        }
-
-        const isIncomingMessages = parsedMessage.authorId !== this.props.currentUser?.id;
-        if (isIncomingMessages) {
-            this.messageSound.play();
-        }
-
-        if (isIncomingMessages && parsedMessage.conversationId !== this.props.currentConversation?.id) {
-            notify.info(`Message: ${parsedMessage.text}`);
-        }
-    }
-
-    createConversationName = () => {
-        if (!this.props.currentConversation) {
-            return "";
-        } else {
-            return this.props.currentConversation.name;
+    handlePressKeyEsc = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+            this.props.resetCurrentConversation();
         }
     }
 
@@ -134,28 +103,20 @@ class Messages extends React.Component<Props, State> {
 
         if (currentConversation && currentConversation.type === "newDialog") {
             try {
-                const newDialogId = await this.props.createDialog(currentConversation.participants[0].id);
-                await this.props.selectConversation(newDialogId);
-
-                currentConversation = this.props.currentConversation;
-                if (currentConversation && currentConversation.id !== 0) {
-                    this.sendMessage(currentConversation.id);
-                }
+                this.props.createDialogAndSelect(currentConversation.participants[0].id, this.state.message);
+                this.setState({ message: "" });
             } catch (e) {
                 notify.error(e.message);
             }
         } else if (currentConversation) {
-            this.sendMessage(currentConversation.id);
+            this.sendMessage();
         }
     }
 
-    sendMessage = (conversationId: number) => {
-        const newMessage = {
-            conversationId,
-            text: this.state.message
-        };
+    sendMessage = () => {
+        if (!this.props.currentConversation) return;
 
-        this.messagesWebSocket.send(JSON.stringify(newMessage));
+        this.props.sendWebSocketMessage(this.props.currentConversation.id, this.state.message);
         this.setState({ message: "" });
     }
 
@@ -163,9 +124,22 @@ class Messages extends React.Component<Props, State> {
         this.setState({ chatDataWindow: isOpened });
     }
 
-    render() {
-        const conversationName = this.createConversationName();
+    handleScrollMessages = () => {
+        if (!this.messageListRef.current) {
+            console.error("Error: 'messageListRef' is null");
+            return;
+        }
 
+        if (this.messageListRef.current.scrollTop <= 10) {
+            this.props.getMessages();
+        }
+
+        if (this.messageListRef.current.scrollTop <= 1) {
+            this.messageListRef.current.scrollTop = 1;
+        }
+    }
+
+    render() {
         return (
             <div className={styles.Messages}>
                 {this.props.currentConversation &&
@@ -178,7 +152,7 @@ class Messages extends React.Component<Props, State> {
                         </Button>
 
                         <Typography variant="body1">
-                            {conversationName}
+                            {this.props.currentConversation?.name}
                         </Typography>
 
                         <div>
@@ -195,7 +169,7 @@ class Messages extends React.Component<Props, State> {
                     </div>
                 }
 
-                <div className={styles.container}>
+                <div className={styles.container} ref={this.messageListRef} onScroll={this.handleScrollMessages}>
                     {this.props.currentConversation?.messages.map((message, i, arr) => {
                         const messageCreatedDate = this.createDate(message, arr[i+1]);
 
@@ -271,20 +245,4 @@ class Messages extends React.Component<Props, State> {
     }
 }
 
-const mapStateToProps = (state: RootState) => ({
-    isFetching: state.conversations.isFetching,
-    error: state.conversations.error,
-    conversations: state.conversations.conversations,
-    currentConversation: state.conversations.currentConversation,
-    currentUser: state.auth.user
-});
-
-const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    resetCurrentConversation: () => dispatch(resetCurrentConversation()),
-    addMessageInCurrentConversation: (message: Message) => dispatch(addMessageInCurrentConversation(message)),
-    setLastMessageInConversation: (conversationId: number, message: Message) => dispatch(setLastMessageInConversation(conversationId, message)),
-    createDialog: (interlocutorId: number) => dispatch(createDialog(interlocutorId)),
-    selectConversation: (id: number) => dispatch(selectConversation(id))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Messages);
+export default Messages;

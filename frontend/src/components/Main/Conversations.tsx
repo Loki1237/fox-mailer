@@ -2,11 +2,7 @@ import React from 'react';
 import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
 
-import { connect } from 'react-redux';
-import { getConversations, selectConversation, deleteConversation } from '../../store/conversations/actions';
-import { Conversation } from '../../store/conversations/types';
-import { RootState } from '../../store/index';
-import { AppThunkDispatch } from '../../store/thunk';
+import { Conversation } from '../../types/conversationsTypes';
 import ConversationListItem from './ConversationListItem';
 
 import {
@@ -18,11 +14,12 @@ import {
     DialogTitle,
     List,
 } from '@material-ui/core';
+import CreateIcon from '@material-ui/icons/Create';
 
 interface Props {
-    fullScreen: boolean,
+    screenMode: "full" | "small",
     isFetching: boolean
-    error: string,
+    error: string | null,
     conversations: Conversation[],
     currentConversation: Conversation | null,
     getConversations: () => void,
@@ -52,7 +49,11 @@ class Conversations extends React.Component<Props, State> {
     selectConversation = (id: number) => {
         const currentConversation = this.props.currentConversation;
         if (!currentConversation || currentConversation.id !== id) {
-            this.props.selectConversation(id)
+            try {
+                this.props.selectConversation(id);
+            } catch (e) {
+                notify.error(e.message);
+            }
         }
     }
 
@@ -80,8 +81,8 @@ class Conversations extends React.Component<Props, State> {
 
     render() {
         return (
-            <div className={styles.Conversations} style={{ width: this.props.fullScreen ? "100%" : "35%" }}>
-                <List>
+            <div className={styles.Conversations} style={{ width: this.props.screenMode === "full" ? "35%" : "100%" }}>
+                <List disablePadding>
                     {this.props.conversations.map(conversation => {
                         return (
                             <ConversationListItem key={"conversation-" + conversation.id}
@@ -109,8 +110,9 @@ class Conversations extends React.Component<Props, State> {
                         <Button color="primary" onClick={() => this.toggleDeleteConversationWindow(false)}>
                             Cancel
                         </Button>
-                        <Button variant="outlined"
+                        <Button variant="contained"
                             color="primary"
+                            disableElevation
                             onClick={this.deleteConversation}
                         >
                             Delete
@@ -122,17 +124,4 @@ class Conversations extends React.Component<Props, State> {
     }
 }
 
-const mapStateToProps = (state: RootState) => ({
-    isFetching: state.conversations.isFetching,
-    error: state.conversations.error,
-    conversations: state.conversations.conversations,
-    currentConversation: state.conversations.currentConversation
-});
-
-const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
-    getConversations: () => dispatch(getConversations()),
-    selectConversation: (id: number) => dispatch(selectConversation(id)),
-    deleteConversation: (id: number) => dispatch(deleteConversation(id))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Conversations);
+export default Conversations;
