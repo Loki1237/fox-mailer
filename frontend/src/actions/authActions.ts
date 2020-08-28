@@ -1,24 +1,29 @@
-import { AppThunkAction } from '../thunk';
+import { AppThunkAction } from '../store/thunk';
+import { connect, disconnect } from '@giantmachines/redux-websocket';
 import { Dispatch } from 'redux';
 import {
-    SET_AUTH_IS_FETCHING,
-    SET_AUTH_ERROR,
-    SET_CURRENT_USER,
-    User,
     AuthAction,
     LoginData,
-    SignupData
-} from './types';
-import { httpRequest } from '../httpRequest';
+    SignupData,
+    FETCH_AUTH_REQUEST,
+    FETCH_AUTH_SUCCESS,
+    FETCH_AUTH_FAILURE,
+    SET_CURRENT_USER
+} from '../types/authTypes';
+import { User } from '../types';
+import { httpRequest } from '../middleware/httpRequest';
 
-const setIsFetching = (value: boolean): AuthAction => ({
-    type: SET_AUTH_IS_FETCHING,
-    isFetching: value
+const fetchRequest = (): AuthAction => ({
+    type: FETCH_AUTH_REQUEST
 });
 
-const setError = (value: string): AuthAction => ({
-    type: SET_AUTH_ERROR,
-    error: value
+const fetchSuccess = (): AuthAction => ({
+    type: FETCH_AUTH_SUCCESS
+});
+
+const fetchFailure = (error: string): AuthAction => ({
+    type: FETCH_AUTH_FAILURE,
+    error
 });
 
 export const setCurrentUser = (payload: User | null): AuthAction => ({
@@ -28,16 +33,18 @@ export const setCurrentUser = (payload: User | null): AuthAction => ({
 
 export const login = (data: LoginData): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        dispatch(setIsFetching(true));
+        dispatch(fetchRequest());
         const response = await httpRequest("POST", '/api/login').json(data).send();
 
-        dispatch(setIsFetching(false));
         if (response.ok) {
+            dispatch(fetchSuccess());
+            dispatch(connect('ws://localhost:3000/messages'));
+
             const user = await response.json();
             dispatch(setCurrentUser(user));
         } else {
             const errorMessage = response.status === 400 ? "Incorrect username or password" : response.statusText;
-            dispatch(setError(errorMessage));
+            dispatch(fetchFailure(errorMessage));
             throw Error(errorMessage);
         }
     }
@@ -48,10 +55,11 @@ export const loginAs = (): AppThunkAction => {
         const response = await httpRequest("POST", '/api/login/as').send();
 
         if (response.ok) {
+            dispatch(connect('ws://localhost:3000/messages'));
+
             const user = await response.json();
             dispatch(setCurrentUser(user));
         } else {
-            dispatch(setError(response.statusText));
             throw Error(response.statusText);
         }
     }
@@ -63,8 +71,8 @@ export const logout = (): AppThunkAction => {
 
         if (response.ok) {
             dispatch(setCurrentUser(null));
+            dispatch(disconnect());
         } else {
-            dispatch(setError(response.statusText));
             throw Error(response.statusText);
         }
     }
@@ -72,13 +80,14 @@ export const logout = (): AppThunkAction => {
 
 export const signup = (data: SignupData): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        dispatch(setIsFetching(true));
+        dispatch(fetchRequest());
         const response = await httpRequest("POST", '/api/signup').json(data).send();
 
-        dispatch(setIsFetching(false));
-        if (!response.ok) {
+        if (response.ok) {
+            dispatch(fetchSuccess());
+        } else {
             const errorMessage = response.status === 400 ? "Username already taken" : response.statusText;
-            dispatch(setError(errorMessage));
+            dispatch(fetchFailure(errorMessage));
             throw Error(errorMessage);
         }
     }

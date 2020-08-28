@@ -1,28 +1,32 @@
-import { AppThunkAction } from '../thunk';
+import { AppThunkAction } from '../store/thunk';
 import { Dispatch } from 'redux';
-import { RootState } from '../index';
+import { RootState } from '../store';
 import {
     ContactsAction,
-    User,
-    SET_CONTACTS_IS_FETCHING,
-    SET_CONTACTS_ERROR,
+    FETCH_CONTACTS_REQUEST,
+    FETCH_CONTACTS_SUCCESS,
+    FETCH_CONTACTS_FAILURE,
     SET_CONTACT_LIST,
     SET_FOUND_USER_LIST,
     CLEAR_CONTACTS,
     CLEAR_FOUND_USERS,
     RESET_CONTACTS_STATE
-} from './types';
+} from '../types/contactsTypes';
+import { User } from '../types';
 import _ from 'lodash';
-import { httpRequest } from '../httpRequest';
+import { httpRequest } from '../middleware/httpRequest';
 
-const setIsFetching = (value: boolean): ContactsAction => ({
-    type: SET_CONTACTS_IS_FETCHING,
-    isFetching: value
+const fetchRequest = (): ContactsAction => ({
+    type: FETCH_CONTACTS_REQUEST
 });
 
-const setError = (value: string): ContactsAction => ({
-    type: SET_CONTACTS_ERROR,
-    error: value
+const fetchSuccess = (): ContactsAction => ({
+    type: FETCH_CONTACTS_SUCCESS
+});
+
+const fetchFailure = (error: string): ContactsAction => ({
+    type: FETCH_CONTACTS_FAILURE,
+    error
 });
 
 const setContactList = (payload: User[]): ContactsAction => ({
@@ -49,15 +53,16 @@ export const resetState = (): ContactsAction => ({
 
 export const findContacts = (): AppThunkAction => {
     return async (dispatch: Dispatch) => {
-        dispatch(setIsFetching(true));
+        dispatch(fetchRequest());
         const response = await httpRequest("GET", '/api/contacts').send();
 
-        dispatch(setIsFetching(false));
         if (response.ok) {
+            dispatch(fetchSuccess());
+
             const contacts = await response.json();
             dispatch(setContactList(contacts));
         } else {
-            dispatch(setError(response.statusText));
+            dispatch(fetchFailure(response.statusText));
             throw Error(response.statusText);
         }
     }
@@ -65,15 +70,16 @@ export const findContacts = (): AppThunkAction => {
 
 export const findUsers = (string: string, event: "buttonClick" | "listScroll"): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
-        dispatch(setIsFetching(true));
+        dispatch(fetchRequest());
 
         const state = getState().contacts;
         const skipCount = event === "listScroll" ? state.foundUsers.length : 0;
 
         const response = await httpRequest("POST", '/api/users/search').json({ string, skipCount }).send();
 
-        dispatch(setIsFetching(false));
         if (response.ok) {
+            dispatch(fetchSuccess());
+
             const newFoundUsers = await response.json();
             for (let user of newFoundUsers) {
                 user.inContacts = _.findIndex(state.contacts, { id: user.id }) >= 0;
@@ -86,7 +92,7 @@ export const findUsers = (string: string, event: "buttonClick" | "listScroll"): 
                 dispatch(setFoundUserList(newFoundUsers));
             }
         } else {
-            dispatch(setError(response.statusText));
+            dispatch(fetchFailure(response.statusText));
             throw Error(response.statusText);
         }
     }
@@ -98,23 +104,24 @@ export const addContact = (id: number, index: number): AppThunkAction => {
 
         if (response.ok) {
             const state = getState().contacts;
+            const contacts = [...state.contacts];
+            const foundUsers = [...state.foundUsers];
 
             const newContact = await response.json();
-            state.contacts.push(newContact);
-            state.contacts.sort((prevUser: User, nextUser: User) => {
+            contacts.push(newContact);
+            contacts.sort((prevUser: User, nextUser: User) => {
                 if (prevUser.firstName > nextUser.firstName) return 1;
                 if (prevUser.firstName < nextUser.firstName) return -1;
                 return 0;
             });
 
-            const user = state.foundUsers[index];
+            const user = foundUsers[index];
             user.inContacts = true;
 
-            dispatch(setContactList(state.contacts));
+            dispatch(setContactList(contacts));
             dispatch(clearFoundUsers());
-            dispatch(setFoundUserList(state.foundUsers));
+            dispatch(setFoundUserList(foundUsers));
         } else {
-            dispatch(setError(response.statusText));
             throw Error(response.statusText);
         }
     }
@@ -125,13 +132,12 @@ export const deleteContact = (id: number, index: number): AppThunkAction => {
         const response = await httpRequest("DELETE", `/api/contacts/delete/${id}`).send();
 
         if (response.ok) {
-            const contacts = getState().contacts.contacts;
+            const contacts = [...getState().contacts.contacts];
             contacts.splice(index, 1);
 
             dispatch(clearContacts());
             dispatch(setContactList(contacts));
         } else {
-            dispatch(setError(response.statusText));
             throw Error(response.statusText);
         }
     }

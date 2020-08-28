@@ -1,33 +1,43 @@
 import {
     ContactsState,
     ContactsAction,
-    SET_CONTACTS_IS_FETCHING,
-    SET_CONTACTS_ERROR,
+    FETCH_CONTACTS_REQUEST,
+    FETCH_CONTACTS_SUCCESS,
+    FETCH_CONTACTS_FAILURE,
     SET_CONTACT_LIST,
     SET_FOUND_USER_LIST,
     CLEAR_FOUND_USERS,
     CLEAR_CONTACTS,
     RESET_CONTACTS_STATE
-} from './types';
+} from '../types/contactsTypes';
 
-const initialState = {
+const initialState: ContactsState = {
     isFetching: false,
-    error: "",
+    error: null,
     contacts: [],
     foundUsers: []
 };
 
-export default function(state: ContactsState = initialState, action: ContactsAction): ContactsState {
+export default function(state = initialState, action: ContactsAction): ContactsState {
     switch (action.type) {
-        case SET_CONTACTS_IS_FETCHING:
+        case FETCH_CONTACTS_REQUEST:
             return {
                 ...state,
-                isFetching: action.isFetching
+                isFetching: true,
+                error: null
             };
 
-        case SET_CONTACTS_ERROR:
+        case FETCH_CONTACTS_SUCCESS:
             return {
                 ...state,
+                isFetching: false,
+                error: null
+            };
+
+        case FETCH_CONTACTS_FAILURE:
+            return {
+                ...state,
+                isFetching: false,
                 error: action.error
             };
 
