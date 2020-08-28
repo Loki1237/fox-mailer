@@ -7,7 +7,7 @@ import {
     ListItemSecondaryAction,
     ListItemText,
 } from '@material-ui/core';
-import { User } from '../../store/contacts/types';
+import { User } from '../../types';
 
 interface Props {
     user: User,

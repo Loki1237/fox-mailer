@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Styles.m.scss';
 import clsx from 'clsx';
-import { Message } from '../../store/conversations/types';
+import { Message } from '../../types/conversationsTypes';
 import { Typography, } from '@material-ui/core';
 
 interface Props {

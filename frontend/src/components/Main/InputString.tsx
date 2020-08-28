@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Styles.m.scss';
 
-import { IconButton, InputBase, TextField } from '@material-ui/core';
+import { IconButton, InputBase } from '@material-ui/core';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 import SendIcon from '@material-ui/icons/Send';
 

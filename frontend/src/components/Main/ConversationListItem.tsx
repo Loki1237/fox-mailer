@@ -1,5 +1,5 @@
 import React from 'react';
-import { Conversation } from '../../store/conversations/types';
+import { Conversation } from '../../types/conversationsTypes';
 import {
     Avatar,
     Divider,

@@ -4,6 +4,14 @@
     overflow-y: auto;
 }
 
+.search_form {
+    display: flex;
+    align-items: center;
+    width: 350px;
+    box-sizing: border-box;
+    padding: 0 16px;
+}
+
 .left_action_button {
     position: absolute;
     left: 8px;

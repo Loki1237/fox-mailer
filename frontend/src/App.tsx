@@ -3,11 +3,11 @@ import styles from './App.m.scss';
 import { Router, Route } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 
-import Login from './components/Auth/Login';
-import Signup from './components/Auth/Signup';
-import Main from './components/Main/Main';
-import Contacts from './components/Contacts/Contacts';
-import CreatingChat from './components/CreatingChat/CreatingChat';
+import Login from './containers/Login';
+import Signup from './containers/Signup';
+import Main from './containers/Main';
+import Contacts from './containers/Contacts';
+import CreatingChat from './containers/CreatingChat';
 
 import 'fontsource-roboto';
 import { connect } from 'react-redux';
@@ -26,6 +26,7 @@ import {
     IconButton,
     List,
     ListItem,
+    ListItemAvatar,
     ListItemIcon,
     ListItemText,
     Toolbar,
@@ -36,44 +37,45 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.notifications.scss';
 
-import { loginAs, logout } from './store/auth/actions';
-import { User } from './store/auth/types';
+import { setAppScreenMode } from './actions/appActions';
+import { loginAs, logout } from './actions/authActions';
+import { User } from './types';
 
 export const history = createBrowserHistory();
 
 interface Props {
     currentUser: User | null,
+    screenMode: "full" | "small",
     loginAs: () => void,
-    logout: () => void
+    logout: () => void,
+    setAppScreenMode: (mode: "full" | "small") => void
 }
 
 interface State {
     sideMenu: boolean,
     contactWindow: boolean,
-    creatingChatWindow: boolean,
-    smallScreenMode: boolean
+    creatingChatWindow: boolean
 }
 
 class App extends React.Component<Props, State> {
     state: State = {
         sideMenu: false,
         contactWindow: false,
-        creatingChatWindow: false,
-        smallScreenMode: false
+        creatingChatWindow: false
     }
 
     componentDidMount() {
         this.loginAs();
-        this.setSmallScreenMode();
-        window.addEventListener("resize", this.setSmallScreenMode);
+        this.setScreenMode();
+        window.addEventListener("resize", this.setScreenMode);
     }
 
-    setSmallScreenMode = () => {
+    setScreenMode = () => {
         const screenWidth = document.body.clientWidth;
         if (screenWidth <= 620) {
-            this.setState({ smallScreenMode: true });
+            this.props.setAppScreenMode("small");
         } else {
-            this.setState({ smallScreenMode: false });
+            this.props.setAppScreenMode("full");
         }
     }
 
@@ -129,15 +131,15 @@ class App extends React.Component<Props, State> {
 
                 <Router history={history}>
                     <Route path='/login'>
-                        <Login smallScreenMode={this.state.smallScreenMode} />
+                        <Login />
                     </Route>
 
                     <Route path='/signup'>
-                        <Signup smallScreenMode={this.state.smallScreenMode} />
+                        <Signup />
                     </Route>
 
                     <Route path='/main'>
-                        <Main smallScreenMode={this.state.smallScreenMode} />
+                        <Main />
                     </Route>
 
                     <Route path='/'>
@@ -151,18 +153,24 @@ class App extends React.Component<Props, State> {
                     </Route>
                 </Router>
 
-                <Drawer anchor="left" open={this.state.sideMenu}
+                <Drawer anchor="left"
+                    open={this.state.sideMenu}
                     onClose={() => this.toggleSideMenu(false)}
                 >
-                    <div className={styles.side_menu_header}>
-                        <Avatar>{this.props.currentUser?.firstName[0]}</Avatar>
-                        <div className={styles.user_data}>
-                            <Typography variant="body1" noWrap>{this.props.currentUser?.firstName}</Typography>
-                            <Typography variant="body1" noWrap>{this.props.currentUser?.lastName}</Typography>
-                        </div>
-                    </div>
+                    <List classes={{ root: styles.side_menu }}>
+                        <ListItem>
+                            <ListItemAvatar>
+                                <Avatar>{this.props.currentUser?.firstName[0]}</Avatar>
+                            </ListItemAvatar>
 
-                    <List>
+                            <ListItemText
+                                primary={this.props.currentUser?.firstName + " " + this.props.currentUser?.lastName}
+                                secondary={this.props.currentUser?.userName}
+                            />
+                        </ListItem>
+
+                        <Divider />
+
                         <ListItem button onClick={() => this.toggleCreatingChatWindow(true)}>
                             <ListItemIcon><PeopleIcon /></ListItemIcon>
                             <ListItemText primary="Create chat" />
@@ -201,12 +209,14 @@ class App extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: RootState) => ({
-    currentUser: state.auth.user
+    currentUser: state.auth.user,
+    screenMode: state.app.screenMode
 });
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
     loginAs: () => dispatch(loginAs()),
-    logout: () => dispatch(logout())
+    logout: () => dispatch(logout()),
+    setAppScreenMode: (mode: "full" | "small") => dispatch(setAppScreenMode(mode))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

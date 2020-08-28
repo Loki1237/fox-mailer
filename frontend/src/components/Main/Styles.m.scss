@@ -11,6 +11,7 @@
 .Conversations {
     min-width: 35%;
     height: 100%;
+    position: relative;
     border-right: solid 1px #AAA;
     overflow: auto;
 }
@@ -37,7 +38,7 @@
         flex-grow: 1;
         display: flex;
         flex-direction: column-reverse;
-        padding-bottom: 12px;
+        padding: 12px 0;
         background-color: #DDD;
         overflow-y: scroll;
 
