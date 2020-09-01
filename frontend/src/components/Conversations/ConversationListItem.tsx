@@ -43,7 +43,7 @@ interface Props {
 const ConversationListItem = (props: Props) => {
     const conversationAvatar = props.conversation.type === "dialog" ? props.conversation.name[0] : <GroupIcon />;
     const classes = useStyles();
-    const lastMessage = props.conversation.messages[0];
+    const lastMessage = props.conversation.messages[0]?.text || "...";
 
     return (
         <React.Fragment>
@@ -73,7 +73,7 @@ const ConversationListItem = (props: Props) => {
                             color="textSecondary"
                             classes={{ body2: props.selected ? classes.whiteText : "" }}
                         >
-                            {lastMessage?.text || "..."}
+                            {lastMessage}
                         </Typography>
                     }
                 />

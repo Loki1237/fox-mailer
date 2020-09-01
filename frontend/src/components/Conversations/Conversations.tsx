@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
 
+import { ScreenMode } from '../../types/appTypes';
 import { Conversation } from '../../types/conversationsTypes';
 import ConversationListItem from './ConversationListItem';
 
@@ -14,10 +15,9 @@ import {
     DialogTitle,
     List,
 } from '@material-ui/core';
-import CreateIcon from '@material-ui/icons/Create';
 
 interface Props {
-    screenMode: "full" | "small",
+    screenMode: ScreenMode,
     isFetching: boolean
     error: string | null,
     conversations: Conversation[],
@@ -81,7 +81,9 @@ class Conversations extends React.Component<Props, State> {
 
     render() {
         return (
-            <div className={styles.Conversations} style={{ width: this.props.screenMode === "full" ? "35%" : "100%" }}>
+            <div className={styles.Conversations}
+                style={{ width: this.props.screenMode === ScreenMode.FULL ? "35%" : "100%" }}
+            >
                 <List disablePadding>
                     {this.props.conversations.map(conversation => {
                         return (

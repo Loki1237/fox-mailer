@@ -7,7 +7,7 @@ import {
 } from '../actions/conversationsActions';
 import { RootState } from '../store';
 import { AppThunkDispatch } from '../store/thunk';
-import Messages from '../components/Main/Messages';
+import Messages from '../components/Messages/Messages';
 
 const mapStateToProps = (state: RootState) => ({
     isFetching: state.conversations.isFetching,

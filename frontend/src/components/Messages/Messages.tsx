@@ -1,8 +1,10 @@
 /*
- * TODO: добавить имя автора для каждого сообщения в чатах
- *       подправить функцию createDate
- *       сделать поиск сообщений
- *       сделать добавление пользователей в чат
+ * TODO:
+ * -добавить имя автора для каждого сообщения в чатах
+ * -подправить функцию createDate
+ * -поиск сообщений
+ * -добавление пользователей в чат
+ * -если в данный момент создается диалог, но собеседник тоже создал диалог и написал сообщение - открыть этот диалог
  */
 
 import React from 'react';
@@ -10,11 +12,11 @@ import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
 import _ from 'lodash';
 
-import InputString from './InputString';
+import MessageInput from './MessageInput';
 import MessageListItem from './MessageListItem';
+import ManagingChat from '../../containers/ManagingChat';
 
 import { Conversation, Message } from '../../types/conversationsTypes';
-import { WsOutgoingTextMessage } from '../../types/webSocketTypes';
 import { User } from '../../types';
 
 import {
@@ -24,6 +26,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     IconButton,
     List,
     ListItem,
@@ -48,14 +51,14 @@ interface Props {
 
 interface State {
     message: string,
-    chatDataWindow: boolean
+    managingChatWindow: boolean
 }
 
 class Messages extends React.Component<Props, State> {
     messageListRef: React.RefObject<HTMLDivElement> = React.createRef();
     state: State = {
         message: "",
-        chatDataWindow: false
+        managingChatWindow: false
     }
 
     componentDidMount() {
@@ -120,8 +123,8 @@ class Messages extends React.Component<Props, State> {
         this.setState({ message: "" });
     }
 
-    toggleChatDataWindow = (isOpened: boolean) => {
-        this.setState({ chatDataWindow: isOpened });
+    toggleManagingChatWindow = (isOpened: boolean) => {
+        this.setState({ managingChatWindow: isOpened });
     }
 
     handleScrollMessages = () => {
@@ -161,7 +164,7 @@ class Messages extends React.Component<Props, State> {
                             </IconButton>
 
                             {this.props.currentConversation?.type === "chat" &&
-                                <IconButton size="small" onClick={() => this.toggleChatDataWindow(true)}>
+                                <IconButton size="small" onClick={() => this.toggleManagingChatWindow(true)}>
                                     <InfoIcon />
                                 </IconButton>
                             }
@@ -201,45 +204,15 @@ class Messages extends React.Component<Props, State> {
                 </div>
 
                 {this.props.currentConversation &&
-                    <InputString message={this.state.message}
-                        writeMessage={this.handleChangeTextField}
+                    <MessageInput message={this.state.message}
+                        onMessageChange={this.handleChangeTextField}
                         sendMessage={this.handleClickSendButton}
                     />
                 }
 
-                <Dialog open={this.state.chatDataWindow && this.props.currentConversation !== null}
-                    onClose={() => this.toggleChatDataWindow(false)}
-                >
-                    <DialogTitle>Data of chat</DialogTitle>
-
-                    <DialogContent>
-                        <Typography>Name: {this.props.currentConversation?.name}</Typography>
-                        <Typography>Participants:</Typography>
-                    </DialogContent>
-                    <div className={styles.chat_participants_list}>
-                        <List dense>
-                            {this.props.currentConversation?.participants.map(user => {
-                                const fullName = user.firstName + " " + user.lastName;
-                                const userName = user.userName;
-
-                                return (
-                                    <ListItem key={user.id} dense>
-                                        <ListItemAvatar>
-                                            <Avatar>{user.firstName[0]}</Avatar>
-                                        </ListItemAvatar>
-                                        <ListItemText primary={fullName} secondary={userName} />
-                                    </ListItem>
-                                );
-                            })}
-                        </List>
-                    </div>
-
-                    <DialogActions>
-                        <Button onClick={() => this.toggleChatDataWindow(false)} color="primary">
-                            Close
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                <ManagingChat isOpened={this.state.managingChatWindow}
+                    onClose={() => this.toggleManagingChatWindow(false)}
+                />
             </div>
         );
     }

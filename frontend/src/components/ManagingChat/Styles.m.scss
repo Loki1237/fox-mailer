@@ -1,0 +1,10 @@
+.chat_participants_list {
+    width: 350px;
+    height: 250px;
+    overflow-y: auto;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+}

@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { getConversations, selectConversation, deleteConversation } from '../actions/conversationsActions';
 import { RootState } from '../store';
 import { AppThunkDispatch } from '../store/thunk';
-import Conversations from '../components/Main/Conversations';
+import Conversations from '../components/Conversations/Conversations';
 
 const mapStateToProps = (state: RootState) => ({
     screenMode: state.app.screenMode,
