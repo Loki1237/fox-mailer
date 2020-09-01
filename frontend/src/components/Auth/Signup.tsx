@@ -18,17 +18,28 @@ import {
 
 import { Link } from 'react-router-dom';
 import { SignupData } from '../../types/authTypes';
+import { ScreenMode } from '../../types/appTypes';
 import { history } from '../../App';
 
 interface Props {
-    screenMode: "full" | "small",
+    screenMode: ScreenMode,
     isFetching: boolean,
     error: string | null,
     signup: (data: SignupData) => void
 }
 
-class Signup extends React.Component<Props>  {
-    state = {
+interface State {
+    [field: string]: any,
+    //-------------------
+    firstName: string,
+    lastName: string,
+    userName: string,
+    password: string,
+    showPassword: boolean
+}
+
+class Signup extends React.Component<Props, State>  {
+    state: State = {
         firstName: "",
         lastName: "",
         userName: "",
@@ -84,11 +95,14 @@ class Signup extends React.Component<Props>  {
     render() {
         return (
             <div className={styles.Auth}>
-                {this.props.screenMode === "full" && <img src={logo} alt="Fox" className={styles.logo} />}
+                {this.props.screenMode === ScreenMode.FULL && <img src={logo} alt="Fox" className={styles.logo} />}
 
                 <form className={styles.form}>
                     <div className={styles.header}>
-                        {this.props.screenMode === "small" && <img src={logo} alt="Fox" className={styles.logo_small} />}
+                        {this.props.screenMode === ScreenMode.SMALL &&
+                            <img src={logo} alt="Fox" className={styles.logo_small} />
+                        }
+
                         <Typography variant="h3" color="primary" align="left">
                             Fox mailer
                         </Typography>

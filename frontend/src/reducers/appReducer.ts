@@ -1,11 +1,12 @@
 import {
     AppState,
     AppAction,
+    ScreenMode,
     APP_SET_SCREEN_MODE
 } from '../types/appTypes';
 
 const initialState: AppState = {
-    screenMode: "full"
+    screenMode: ScreenMode.FULL
 };
 
 export default function(state = initialState, action: AppAction): AppState {

@@ -40,15 +40,16 @@ import './App.notifications.scss';
 import { setAppScreenMode } from './actions/appActions';
 import { loginAs, logout } from './actions/authActions';
 import { User } from './types';
+import { ScreenMode } from './types/appTypes';
 
 export const history = createBrowserHistory();
 
 interface Props {
     currentUser: User | null,
-    screenMode: "full" | "small",
+    screenMode: ScreenMode,
     loginAs: () => void,
     logout: () => void,
-    setAppScreenMode: (mode: "full" | "small") => void
+    setAppScreenMode: (mode: ScreenMode) => void
 }
 
 interface State {
@@ -73,9 +74,9 @@ class App extends React.Component<Props, State> {
     setScreenMode = () => {
         const screenWidth = document.body.clientWidth;
         if (screenWidth <= 620) {
-            this.props.setAppScreenMode("small");
+            this.props.setAppScreenMode(ScreenMode.SMALL);
         } else {
-            this.props.setAppScreenMode("full");
+            this.props.setAppScreenMode(ScreenMode.FULL);
         }
     }
 
@@ -216,7 +217,7 @@ const mapStateToProps = (state: RootState) => ({
 const mapDispatchToProps = (dispatch: AppThunkDispatch) => ({
     loginAs: () => dispatch(loginAs()),
     logout: () => dispatch(logout()),
-    setAppScreenMode: (mode: "full" | "small") => dispatch(setAppScreenMode(mode))
+    setAppScreenMode: (mode: ScreenMode) => dispatch(setAppScreenMode(mode))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

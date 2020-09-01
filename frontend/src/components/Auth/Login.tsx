@@ -18,17 +18,26 @@ import { Visibility, VisibilityOff } from '@material-ui/icons';
 
 import { Link } from 'react-router-dom';
 import { LoginData } from '../../types/authTypes';
+import { ScreenMode } from '../../types/appTypes';
 import { history } from '../../App';
 
 interface Props {
-    screenMode: "full" | "small",
+    screenMode: ScreenMode,
     isFetching: boolean,
     error: string | null,
     login: (data: LoginData) => void
 }
 
-class Login extends React.Component<Props>  {
-    state = {
+interface State {
+    [field: string]: any,
+    //-------------------
+    userName: string,
+    password: string,
+    showPassword: boolean
+}
+
+class Login extends React.Component<Props, State>  {
+    state: State = {
         userName: "",
         password: "",
         showPassword: false
@@ -75,11 +84,13 @@ class Login extends React.Component<Props>  {
     render() {
         return (
             <div className={styles.Auth}>
-                {this.props.screenMode === "full" && <img src={logo} alt="Fox" className={styles.logo} />}
+                {this.props.screenMode === ScreenMode.FULL && <img src={logo} alt="Fox" className={styles.logo} />}
 
                 <form className={styles.form}>
                     <div className={styles.header}>
-                        {this.props.screenMode === "small" && <img src={logo} alt="Fox" className={styles.logo_small} />}
+                        {this.props.screenMode === ScreenMode.SMALL &&
+                            <img src={logo} alt="Fox" className={styles.logo_small} />
+                        }
 
                         <Typography variant="h3" color="primary" align="left">
                             Fox mailer
