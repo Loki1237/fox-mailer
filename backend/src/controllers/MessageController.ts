@@ -1,10 +1,15 @@
+/*
+ * TODO: сделать отправку websocket уведомлений при редактировании чатов
+ */
+
 import { Controller, Get, Post, Put, Delete, Req, Res } from 'routing-controllers';
 import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
 import { Conversation } from '../entities/Conversation';
 import { Message } from '../entities/Message';
 import { User } from '../entities/User';
-import { clients, WsActionMessage } from '../web_socket/messages';
+import { clients, WsMessageTypes, WsConversationActionMessage } from '../web_socket/messages';
+import _ from 'lodash';
 
 const setDialogName = (user: User, participants: User[]) => {
     if (participants[0].id !== user.id) {
@@ -193,12 +198,9 @@ export class MessageController {
         if (client) {
             createdDialog.name = `${req.session.user.firstName} ${req.session.user.lastName}`;
 
-            const wsMessage: WsActionMessage = {
-                type: "action",
-                content: {
-                    action: "create_conversation",
-                    data: createdDialog
-                }
+            const wsMessage: WsConversationActionMessage = {
+                type: WsMessageTypes.CREATE_CONVERSATION,
+                content: createdDialog
             };
             client.send(JSON.stringify(wsMessage));
         }
@@ -219,7 +221,7 @@ export class MessageController {
             .select("user.id")
             .where("user.id = :id", { id: req.session.user.id })
             .leftJoinAndSelect("user.contacts", "contact", "contact.id IN (:...ids)", { ids: req.body.userIds })
-            .getOne()
+            .getOne();
 
         if (!user) {
             return res.status(400).send("user not found");
@@ -235,12 +237,9 @@ export class MessageController {
         });
         const createdChat = await conversationRepository.save(newChat);
 
-        const wsMessage: WsActionMessage = {
-            type: "action",
-            content: {
-                action: "create_conversation",
-                data: createdChat
-            }
+        const wsMessage: WsConversationActionMessage = {
+            type: WsMessageTypes.CREATE_CONVERSATION,
+            content: createdChat
         };
 
         for (let participant of createdChat.participants) {
@@ -251,6 +250,90 @@ export class MessageController {
         }
 
         return res.status(200).send(createdChat);
+    }
+
+    @Put('/conversations/change/chat/participants/add/many')
+    async addParticipantsToChat(@Req() req: Request, @Res() res: Response) {
+        const { chatId, userIds } = req.body;
+
+        const userRepository = getRepository(User);
+        const user = await userRepository
+            .createQueryBuilder("user")
+            .where("user.id = :userId", { userId: req.session.user.id })
+            .leftJoinAndSelect("user.contacts", "contact")
+            .innerJoinAndSelect(
+                "user.conversations",
+                "conversation",
+                "conversation.id = :id",
+                { id: chatId }
+            )
+            .leftJoinAndSelect("conversation.participants", "participant")
+            .getOne();
+
+        if (!user) {
+            return res.status(400).send("conversation not found");
+        }
+
+        const conversation = user.conversations[0];
+        const participants = conversation.participants;
+        const newParticipants = await userRepository
+            .createQueryBuilder("user")
+            .where("user.id IN (:...ids)", { ids: userIds })
+            .getMany();
+
+        for (let user of newParticipants) {
+            const index = _.findIndex(participants, { id: user.id });
+            if (index < 0) {
+                participants.push(user);
+            }
+        }
+
+        const conversationRepository = getRepository(Conversation);
+        conversationRepository.merge(conversation, { participants });
+        const changedChat = await conversationRepository.save(conversation);
+
+        return res.status(200).send(changedChat);
+    }
+
+    //==========================================================================
+    @Put('/conversations/change/chat/participants/delete/one')
+    async deleteParticipantFromChat(@Req() req: Request, @Res() res: Response) {
+        const { chatId, participantId } = req.body;
+
+        const userRepository = getRepository(User);
+        const user = await userRepository
+            .createQueryBuilder("user")
+            .where("user.id = :userId", { userId: req.session.user.id })
+            .leftJoinAndSelect("user.contacts", "contact")
+            .innerJoinAndSelect(
+                "user.conversations",
+                "conversation",
+                "conversation.id = :id",
+                { id: chatId }
+            )
+            .leftJoinAndSelect("conversation.participants", "participant")
+            .getOne();
+
+        if (!user) {
+            return res.status(400).send("conversation not found");
+        }
+
+        const conversation = user.conversations[0];
+        if (participantId === conversation.creatorId) {
+            return res.status(400).send("you can't delete yourself from the conversation because you are the creator");
+        }
+
+        const participants = conversation.participants;
+        const index = _.findIndex(participants, { id: participantId });
+        if (index >= 0) {
+            participants.splice(index, 1);
+        }
+
+        const conversationRepository = getRepository(Conversation);
+        conversationRepository.merge(conversation, { participants });
+        const changedChat = await conversationRepository.save(conversation);
+
+        return res.status(200).send(changedChat);
     }
 
     @Delete('/conversations/delete/:id')
@@ -272,19 +355,21 @@ export class MessageController {
             return res.status(400).send("conversation not found");
         }
 
+        const deletingConversation = user.conversations[0];
+
+        if (deletingConversation.type === "chat" && deletingConversation.creatorId !== req.session.user.id) {
+            return res.status(400).send("you can't delete this conversation");
+        }
+
         const conversationRepository = getRepository(Conversation);
         await conversationRepository.delete({ id: +req.params.id });
 
-        const deletedConversation = user.conversations[0];
-        const wsMessage: WsActionMessage = {
-            type: "action",
-            content: {
-                action: "delete_conversation",
-                data: deletedConversation
-            }
+        const wsMessage: WsConversationActionMessage = {
+            type: WsMessageTypes.DELETE_CONVERSATION,
+            content: deletingConversation
         };
 
-        for (let participant of deletedConversation.participants) {
+        for (let participant of deletingConversation.participants) {
             const client = clients.get(participant.id);
             if (client && participant.id !== req.session.user.id) {
                 client.send(JSON.stringify(wsMessage));
