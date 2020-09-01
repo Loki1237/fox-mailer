@@ -3,14 +3,16 @@ import styles from './Styles.m.scss';
 import { toast as notify } from 'react-toastify';
 import _ from 'lodash';
 import { User } from '../../types';
-import UserListItem from './UserListItem';
+import UserListItem from '../UserListItem/UserListItem';
 
 import {
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     List,
     TextField
 } from '@material-ui/core';
@@ -28,13 +30,13 @@ interface Props {
 
 interface State {
     chatName: string,
-    userIds: number[]
+    participantIds: number[]
 }
 
 class CreatingChat extends React.Component<Props, State> {
     state: State = {
         chatName: "",
-        userIds: []
+        participantIds: []
     }
 
     componentDidUpdate(prevProps: Props) {
@@ -44,6 +46,7 @@ class CreatingChat extends React.Component<Props, State> {
 
         if (this.props.isOpened !== prevProps.isOpened && !this.props.isOpened) {
             this.props.resetContactsState();
+            this.setState({ participantIds: [] });
         }
     }
 
@@ -52,22 +55,22 @@ class CreatingChat extends React.Component<Props, State> {
     }
 
     handleChangeUserSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const userIds = this.state.userIds;
+        const participantIds = this.state.participantIds;
 
         if (e.target.checked ) {
-            this.setState({ userIds: [...userIds, +e.target.value ] });
+            this.setState({ participantIds: [...participantIds, +e.target.value ] });
         } else {
-            const index = userIds.indexOf(+e.target.value);
+            const index = participantIds.indexOf(+e.target.value);
 
             if (index >= 0){
-                userIds.splice(index, 1);
-                this.setState({ userIds });
+                participantIds.splice(index, 1);
+                this.setState({ participantIds });
             }
         }
     }
 
     handleClickCreateChatButton = async () => {
-        const { chatName, userIds } = this.state;
+        const { chatName, participantIds } = this.state;
 
         if (!chatName) {
             notify.warn("Enter the name of the chat");
@@ -75,7 +78,7 @@ class CreatingChat extends React.Component<Props, State> {
         }
 
         try {
-            await this.props.createChatAndSelect(chatName, userIds);
+            await this.props.createChatAndSelect(chatName, participantIds);
             this.props.onClose();
         } catch (e) {
             notify.error(e.message);
@@ -94,18 +97,27 @@ class CreatingChat extends React.Component<Props, State> {
                         onChange={this.handleChangeChatName}
                     />
                 </DialogContent>
+
+                <Divider />
                 <div className={styles.user_list}>
                     <List dense>
                         {this.props.contacts.map(user => {
                             return (
                                 <UserListItem key={user.id}
+                                    selected={this.state.participantIds.includes(user.id)}
                                     user={user}
-                                    setSelected={this.handleChangeUserSelected}
+                                    secondaryAction={
+                                        <Checkbox color="primary"
+                                            value={user.id}
+                                            onChange={this.handleChangeUserSelected}
+                                        />
+                                    }
                                 />
                             );
                         })}
                     </List>
                 </div>
+                <Divider />
 
                 <DialogActions>
                     <Button onClick={this.props.onClose} color="primary">

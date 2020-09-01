@@ -19,7 +19,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import CheckIcon from '@material-ui/icons/Check';
 
 import { User } from '../../types';
-import UserListItem from './UserListItem';
+import UserListItem from '../UserListItem/UserListItem';
 import _ from 'lodash';
 
 interface Props {
@@ -62,6 +62,8 @@ class Contacts extends React.Component<Props, State> {
     }
 
     toggleView = () => {
+        this.setState({ search: "" });
+
         if (this.state.view === "contacts") {
             this.setState({ view: "search" });
             this.props.clearFoundUsers();
@@ -148,9 +150,10 @@ class Contacts extends React.Component<Props, State> {
                                     if (name.toLowerCase().includes(this.state.search.toLowerCase())) {
                                         return (
                                             <UserListItem key={user.id}
+                                                button
                                                 user={user}
                                                 onClick={() => this.handleUserClick(user)}
-                                                action={
+                                                secondaryAction={
                                                     <IconButton onClick={() => this.props.deleteContact(user.id, i)}>
                                                         <DeleteIcon />
                                                     </IconButton>
@@ -174,9 +177,10 @@ class Contacts extends React.Component<Props, State> {
                                 {this.props.foundUsers.map((user, i) => {
                                     return (
                                         <UserListItem key={user.id}
+                                            button
                                             user={user}
                                             onClick={() => this.handleUserClick(user)}
-                                            action={
+                                            secondaryAction={
                                                 <IconButton disabled={user.inContacts}
                                                     onClick={() => this.props.addContact(user.id, i)}
                                                 >
@@ -193,21 +197,11 @@ class Contacts extends React.Component<Props, State> {
 
                 <Divider />
                 <DialogActions>
-                    {this.state.view === "contacts" &&
-                        <div className={styles.left_action_button}>
-                            <Button onClick={this.toggleView} color="primary">
-                                Find users
-                            </Button>
-                        </div>
-                    }
-
-                    {this.state.view === "search" &&
-                        <div className={styles.left_action_button}>
-                            <Button onClick={this.toggleView} color="primary">
-                                Cancel
-                            </Button>
-                        </div>
-                    }
+                    <div className={styles.left_action_button}>
+                        <Button onClick={this.toggleView} color="primary">
+                            {this.state.view === "contacts"? "Find users" : "Cancel"}
+                        </Button>
+                    </div>
 
                     <Button onClick={this.props.onClose} color="primary">
                         Close
