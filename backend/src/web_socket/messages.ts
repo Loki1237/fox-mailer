@@ -7,20 +7,21 @@ import { Message } from '../entities/Message';
 
 export const clients = new Map<number, WebSocket>();
 
-export interface WsTextMessage {
-    type: "text",
-    content: {
-        conversationId: number,
-        text: string
-    }
+export enum WsMessageTypes {
+    TEXT_MESSAGE = "TEXT_MESSAGE",
+    CREATE_CONVERSATION = "CREATE_CONVERSATION",
+    CHANGE_CONVERSATION = "CHANGE_CONVERSATION",
+    DELETE_CONVERSATION = "DELETE_CONVERSATION"
 }
 
-export interface WsActionMessage {
-    type: "action",
-    content: {
-        action: "create_conversation" | "delete_conversation",
-        data: Conversation
-    }
+interface WsIncomingTextMessage {
+    conversationId: number,
+    text: string
+}
+
+export interface WsConversationActionMessage {
+    type: WsMessageTypes.CREATE_CONVERSATION | WsMessageTypes.CHANGE_CONVERSATION | WsMessageTypes.DELETE_CONVERSATION,
+    content: Conversation
 }
 
 export default async function connection(ws: WebSocket, req: Request) {
@@ -28,7 +29,7 @@ export default async function connection(ws: WebSocket, req: Request) {
     clients.set(userId, ws);
 
     ws.on('message', async (message: string) => {
-        const incomingMessage: WsTextMessage = JSON.parse(message);
+        const incomingMessage: WsIncomingTextMessage = JSON.parse(message);
         handleTextMessage(incomingMessage, userId);
     });
 
@@ -37,8 +38,8 @@ export default async function connection(ws: WebSocket, req: Request) {
     });
 }
 
-async function handleTextMessage(message: WsTextMessage, userId: number) {
-    const { conversationId, text } = message.content;
+async function handleTextMessage(message: WsIncomingTextMessage, userId: number) {
+    const { conversationId, text } = message;
 
     const userRepository = getRepository(User);
     const user = await userRepository
@@ -71,7 +72,7 @@ async function handleTextMessage(message: WsTextMessage, userId: number) {
     for (let participant of user.conversations[0].participants) {
         const client = clients.get(participant.id);
         if (client) {
-            client.send(JSON.stringify({ type: "text", content: savedMessage }));
+            client.send(JSON.stringify({ type: WsMessageTypes.TEXT_MESSAGE, content: savedMessage }));
         }
     }
 }
