@@ -6,6 +6,7 @@ export const FETCH_CONVERSATIONS_FAILURE = "FETCH_CONVERSATIONS_FAILURE";
 export const SET_CONVERSATION_LIST = "SET_CONVERSATION_LIST";
 export const SET_CURRENT_CONVERSATION = "SET_CURRENT_CONVERSATION";
 export const SET_CURRENT_MESSAGE_LIST = "SET_CURRENT_MESSAGE_LIST";
+export const SET_PARTICIPANTS_OF_CURRENT_CONVERSATION = "SET_PARTICIPANTS_OF_CURRENT_CONVERSATION";
 export const CREATE_VOID_DIALOG = "CREATE_VOID_DIALOG";
 export const RESET_CURRENT_CONVERSATION = "RESET_CURRENT_CONVERSATION";
 export const WEB_SOCKET_MESSAGE = "REDUX_WEBSOCKET::MESSAGE";
@@ -38,6 +39,11 @@ interface SetCurrentMessageList {
     payload: Message[]
 }
 
+interface SetParticipantsOfCurrentConversation {
+    type: typeof SET_PARTICIPANTS_OF_CURRENT_CONVERSATION,
+    payload: User[]
+}
+
 interface CreateVoidDialog {
     type: typeof CREATE_VOID_DIALOG,
     payload: User
@@ -64,6 +70,7 @@ export type ConversationsAction = FetchConversationsRequest
                                 | SetConversationList
                                 | SetCurrentConversation
                                 | SetCurrentMessageList
+                                | SetParticipantsOfCurrentConversation
                                 | CreateVoidDialog
                                 | ResetCurrentConversation
                                 | WebSocketOnMessage;

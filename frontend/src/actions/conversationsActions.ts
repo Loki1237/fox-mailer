@@ -11,6 +11,7 @@ import {
     SET_CONVERSATION_LIST,
     SET_CURRENT_CONVERSATION,
     SET_CURRENT_MESSAGE_LIST,
+    SET_PARTICIPANTS_OF_CURRENT_CONVERSATION,
     CREATE_VOID_DIALOG,
     RESET_CURRENT_CONVERSATION
 } from '../types/conversationsTypes';
@@ -48,9 +49,14 @@ const setCurrentMessageList = (payload: Message[]): ConversationsAction => ({
     payload
 });
 
-const createVoidDialog = (user: User): ConversationsAction => ({
+const setParticipantsOfCurrentConversation = (payload: User[]): ConversationsAction => ( {
+    type: SET_PARTICIPANTS_OF_CURRENT_CONVERSATION,
+    payload
+});
+
+const createVoidDialog = (payload: User): ConversationsAction => ({
     type: CREATE_VOID_DIALOG,
-    payload: user
+    payload
 });
 
 export const resetCurrentConversation = (): ConversationsAction => ({
@@ -173,6 +179,37 @@ export const createChatAndSelect = (name: string, userIds: number[]): AppThunkAc
     }
 };
 
+export const addUsersToCurrentChat = (userIds: number[]): AppThunkAction => {
+    return async (dispatch: AppThunkDispatch, getState: () => RootState) => {
+        const currentConversationId = getState().conversations.currentConversation?.id || 0;
+        const response = await httpRequest("PUT", '/api/conversations/change/chat/participants/add/many')
+            .json({ chatId: currentConversationId, userIds })
+            .send();
+
+        if (response.ok) {
+            const changedConversation = await response.json();
+            dispatch(setParticipantsOfCurrentConversation(changedConversation.participants));
+        } else {
+            throw Error(response.statusText);
+        }
+    }
+};
+
+export const deleteUserFromChat = (chatId: number, userId: number): AppThunkAction => {
+    return async (dispatch: AppThunkDispatch) => {
+        const response = await httpRequest("PUT", '/api/conversations/change/chat/participants/delete/one')
+            .json({ chatId, participantId: userId })
+            .send();
+
+        if (response.ok) {
+            const changedConversation = await response.json();
+            dispatch(setParticipantsOfCurrentConversation(changedConversation.participants));
+        } else {
+            throw Error(response.statusText);
+        }
+    }
+};
+
 export const deleteConversation = (id: number): AppThunkAction => {
     return async (dispatch: Dispatch, getState: () => RootState) => {
         const response = await httpRequest("DELETE", `/api/conversations/delete/${id}`).send();
@@ -198,10 +235,7 @@ export const deleteConversation = (id: number): AppThunkAction => {
 
 export const sendWebSocketMessage = (conversationId: number, text: string): AppThunkAction => {
     return async (dispatch: AppThunkDispatch) => {
-        const newMessage: WsOutgoingTextMessage = {
-            type: "text",
-            content: { conversationId, text }
-        };
+        const newMessage: WsOutgoingTextMessage = { conversationId, text };
 
         dispatch(send(newMessage));
     }

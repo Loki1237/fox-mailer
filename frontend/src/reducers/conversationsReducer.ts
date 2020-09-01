@@ -8,11 +8,12 @@ import {
     SET_CONVERSATION_LIST,
     SET_CURRENT_CONVERSATION,
     SET_CURRENT_MESSAGE_LIST,
+    SET_PARTICIPANTS_OF_CURRENT_CONVERSATION,
     CREATE_VOID_DIALOG,
     RESET_CURRENT_CONVERSATION,
     WEB_SOCKET_MESSAGE
 } from '../types/conversationsTypes';
-import { WsIncomingMessage } from '../types/webSocketTypes';
+import { WsMessageTypes, WsIncomingMessage } from '../types/webSocketTypes';
 import _ from 'lodash';
 
 const initialState: ConversationsState = {
@@ -70,6 +71,19 @@ export default function(state = initialState, action: ConversationsAction): Conv
                 return state;
             }
 
+        case SET_PARTICIPANTS_OF_CURRENT_CONVERSATION:
+            if (state.currentConversation) {
+                return {
+                    ...state,
+                    currentConversation: {
+                        ...state.currentConversation,
+                        participants: action.payload
+                    }
+                }
+            } else {
+                return state;
+            }
+
         case CREATE_VOID_DIALOG: {
             const user = action.payload;
             return {
@@ -94,44 +108,38 @@ export default function(state = initialState, action: ConversationsAction): Conv
         case WEB_SOCKET_MESSAGE: {
             const message: WsIncomingMessage = JSON.parse(action.payload.message);
             const newState = { ...state };
+            console.log(message);
 
-            if (message.type === "text") {
+            switch (message.type) {
+                case WsMessageTypes.TEXT_MESSAGE: {
+                    const index = _.findIndex(newState.conversations, { id: message.content.conversationId });
+                    if (index >= 0) {
+                        const [changingConversation] = newState.conversations.splice(index, 1);
+                        changingConversation.messages = [message.content];
+                        newState.conversations = [changingConversation, ...newState.conversations];
+                    }
 
-                const index = _.findIndex(newState.conversations, { id: message.content.conversationId });
-                if (index >= 0) {
-                    const [changingConversation] = newState.conversations.splice(index, 1);
-                    changingConversation.messages = [message.content];
-                    newState.conversations = [changingConversation, ...newState.conversations];
+                    if (message.content.conversationId === newState.currentConversation?.id) {
+                        newState.currentConversation.messages = [
+                            message.content,
+                            ...newState.currentConversation.messages
+                        ];
+                    }
+                    break;
                 }
 
-                if (message.content.conversationId === newState.currentConversation?.id) {
-                    newState.currentConversation.messages = [
-                        message.content,
-                        ...newState.currentConversation.messages
-                    ];
+                case WsMessageTypes.DELETE_CONVERSATION: {
+                    const deletedConversation: Conversation = message.content;
+                    const index = _.findIndex(newState.conversations, { id: deletedConversation.id });
+
+                    if (index >= 0) {
+                        newState.conversations.splice(index, 1);
+                    }
+                    if (deletedConversation.id === newState.currentConversation?.id) {
+                        newState.currentConversation = null;
+                    }
+                    break;
                 }
-
-            } else if (message.type === "action") {
-
-                switch (message.content.action) {
-                    case "create_conversation":
-                        const newConversation: Conversation = message.content.data;
-                        newState.conversations = [newConversation, ...newState.conversations];
-                        break;
-
-                    case "delete_conversation":
-                        const deletedConversation: Conversation = message.content.data;
-                        const index = _.findIndex(newState.conversations, { id: deletedConversation.id });
-
-                        if (index >= 0) {
-                            newState.conversations.splice(index, 1);
-                        }
-                        if (deletedConversation.id === newState.currentConversation?.id) {
-                            newState.currentConversation = null;
-                        }
-                        break;
-                }
-
             }
 
             return newState;
