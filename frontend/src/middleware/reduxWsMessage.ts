@@ -1,5 +1,5 @@
 import { Middleware } from 'redux';
-import { WsIncomingMessage } from '../types/webSocketTypes';
+import { WsIncomingMessage, WsMessageTypes } from '../types/webSocketTypes';
 import { Conversation, WEB_SOCKET_MESSAGE } from '../types/conversationsTypes';
 import { RootState } from '../store';
 import { toast as notify } from 'react-toastify';
@@ -12,7 +12,7 @@ const reduxWebSocketMessageMiddleware: Middleware<any, RootState> = store => nex
         const state = store.getState();
         const message: WsIncomingMessage = JSON.parse(action.payload.message);
 
-        if (message.type === "text") {
+        if (message.type === WsMessageTypes.TEXT_MESSAGE) {
             const currentConversation = state.conversations.currentConversation;
             const isIncomingMessage = message.content.authorId !== state.auth.user?.id;
             const messageForCurrentConversation = message.content.conversationId === currentConversation?.id;
@@ -23,10 +23,10 @@ const reduxWebSocketMessageMiddleware: Middleware<any, RootState> = store => nex
             }
         }
 
-        if (message.type === "action" && message.content.action === "create_conversation") {
-            if (message.content.data.creatorId !== state.auth.user?.id) {
+        if (message.type === WsMessageTypes.CREATE_CONVERSATION) {
+            if (message.content.creatorId !== state.auth.user?.id) {
                 messageSoundNotification.play();
-                const newConversation: Conversation = message.content.data;
+                const newConversation: Conversation = message.content;
 
                 if (newConversation.type === "dialog") {
                     notify.info(`Message: ${newConversation.messages[0].text}`);
